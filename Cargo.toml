@@ -1,0 +1,10 @@
+[package]
+name = "chess"
+version = "0.1.0"
+authors = ["Sindre Stephansen <sindre@sindrestephansen.com>"]
+
+[dependencies]
+log="0.3"
+
+[dev-dependencies]
+env_logger="0.3"
