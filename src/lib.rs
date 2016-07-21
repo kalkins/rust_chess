@@ -669,17 +669,23 @@ impl<'a> Game<'a> {
                         match piece.color {
                             Color::White => {
                                 if pos.1 == 1 {
-                                    moves.push((pos.0, pos.1 + 2));
+                                    if let None = self.get_from_pos((pos.0, pos.1 + 2)) {
+                                        moves.push((pos.0, pos.1 + 2));
+                                    }
                                 }
 
-                                moves.push((pos.0, pos.1 + 1));
+                                if pos.1 < 7 {
+                                    if let None = self.get_from_pos((pos.0, pos.1 + 1)) {
+                                        moves.push((pos.0, pos.1 + 1));
+                                    }
+                                }
 
-                                if pos.0 > 0 {
+                                if pos.0 > 0 && pos.1 < 7{
                                     if let Some(_) = self.get_from_pos((pos.0 - 1, pos.1 + 1)) {
                                         moves.push((pos.0 - 1, pos.1 + 1));
                                     }
                                 }
-                                if pos.0 < 7 {
+                                if pos.0 < 7 && pos.1 < 7{
                                     if let Some(_) = self.get_from_pos((pos.0 + 1, pos.1 + 1)) {
                                         moves.push((pos.0 + 1, pos.1 + 1));
                                     }
@@ -687,17 +693,23 @@ impl<'a> Game<'a> {
                             },
                             Color::Black => {
                                 if pos.1 == 6 {
-                                    moves.push((pos.0, pos.1 - 2));
+                                    if let None = self.get_from_pos((pos.0, pos.1 - 2)) {
+                                        moves.push((pos.0, pos.1 - 2));
+                                    }
                                 }
 
-                                moves.push((pos.0, pos.1 - 1));
+                                if pos.1 > 0 {
+                                    if let None = self.get_from_pos((pos.0, pos.1 - 1)) {
+                                        moves.push((pos.0, pos.1 - 1));
+                                    }
+                                }
 
-                                if pos.0 > 0 {
+                                if pos.0 > 0 && pos.1 > 0 {
                                     if let Some(_) = self.get_from_pos((pos.0 - 1, pos.1 - 1)) {
                                         moves.push((pos.0 - 1, pos.1 - 1));
                                     }
                                 }
-                                if pos.0 < 7 {
+                                if pos.0 < 7 && pos.1 > 0 {
                                     if let Some(_) = self.get_from_pos((pos.0 + 1, pos.1 - 1)) {
                                         moves.push((pos.0 + 1, pos.1 - 1));
                                     }
