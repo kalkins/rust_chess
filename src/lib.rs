@@ -178,10 +178,10 @@ impl<'a> Game<'a> {
             board[i][7] = Some(&BLACK[1+i]);
             board[7-i][7] = Some(&BLACK[1+i]);
         }
-        board[3][0] = Some(&WHITE[5]);
-        board[4][0] = Some(&WHITE[4]);
-        board[3][7] = Some(&BLACK[5]);
-        board[4][7] = Some(&BLACK[4]);
+        board[4][0] = Some(&WHITE[5]);
+        board[3][0] = Some(&WHITE[4]);
+        board[4][7] = Some(&BLACK[5]);
+        board[3][7] = Some(&BLACK[4]);
 
         Game { turn: 1, board: board, ignore_kings: false, ignore_check: false}
     }
