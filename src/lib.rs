@@ -61,6 +61,19 @@ pub enum Kind {
     Pawn,
 }
 
+impl std::fmt::Display for Kind {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            Kind::King => write!(f, "king"),
+            Kind::Queen => write!(f, "queen"),
+            Kind::Knight => write!(f, "knight"),
+            Kind::Bishop => write!(f, "bishop"),
+            Kind::Rook => write!(f, "rook"),
+            Kind::Pawn => write!(f, "pawn"),
+        }
+    }
+}
+
 /// The different colors of chess pieces.
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Color {
@@ -70,10 +83,9 @@ pub enum Color {
 
 impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        if *self == Color::White {
-            write!(f, "Color::White")
-        } else {
-            write!(f, "Color::Black")
+        match *self {
+            Color::White => write!(f, "white"),
+            Color::Black => write!(f, "black"),
         }
     }
 }
@@ -85,6 +97,15 @@ pub enum Victory {
     Remi,
 }
 
+impl std::fmt::Display for Victory {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            Victory::Checkmate => write!(f, "checkmate"),
+            Victory::Remi => write!(f, "remi"),
+        }
+    }
+}
+
 /// The chess piece struct.
 #[derive(PartialEq, Debug)]
 pub struct Piece {
@@ -92,6 +113,12 @@ pub struct Piece {
     pub color: Color,
     /// The type of chess piece.
     pub kind: Kind,
+}
+
+impl std::fmt::Display for Piece {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{} {}", self.color, self.kind)
+    }
 }
 
 /// The game struct.
@@ -1017,6 +1044,120 @@ impl<'a> Game<'a> {
 
         None
     }
+
+    /// Turns a move tuple into a human readable description.
+    ///
+    /// # Eksamples
+    ///
+    /// ```
+    /// # use chess::*;
+    /// let game = Game::new();
+    /// let m = game.valid_moves((4, 1));
+    /// assert_eq!(game.move_to_string(&m[0][0]), "Moving white pawn from E2 to E4");
+    /// ```
+    pub fn move_to_string(&self, m: &((usize, usize), (usize, usize))) -> String {
+        let mut s = String::new();
+        let from = m.0;
+        let to = m.1;
+
+        let from_string = match pos_to_string(from) {
+            Ok(s) => s,
+            Err(e) => panic!("Invalid position ({}, {}). Error code {}", from.0, from.1, e),
+        };
+        let to_string = match pos_to_string(to) {
+            Ok(s) => s,
+            Err(e) => panic!("Invalid position ({}, {}). Error code {}", to.0, to.1, e),
+        };
+
+        if let Some(p) = self.get_from_pos(from) {
+            s.push_str(&format!("Moving {} {} ", p.color, p.kind));
+        } else {
+            s.push_str("Moving ");
+        }
+        s.push_str(&format!("from {} to ", from_string));
+
+        if let Some(p) = self.get_from_pos(to) {
+            s.push_str(&format!("{} {} at ", p.color, p.kind));
+        }
+        s.push_str(&format!("{}", to_string));
+
+        s
+    }
+
+    /// Turns an array of move tuples, like entries returned from valid_moves, into a human readable description.
+    ///
+    /// # Eksamples
+    ///
+    /// ```
+    /// # use chess::*;
+    /// let game = Game::new();
+    /// let m = game.valid_moves((4, 1));
+    /// assert_eq!(game.moves_to_string(&m[0]), "Moving white pawn from E2 to E4");
+    /// ```
+    pub fn moves_to_string(&self, m: &[((usize, usize), (usize, usize))]) -> String {
+        let mut s = String::new();
+        let mut first = true;
+        for v in m {
+            if !first {
+                s.push_str("\n");
+            }
+            s.push_str(&self.move_to_string(v));
+            first = false;
+        }
+
+        s
+    }
+
+    /// Returns the game board as a string.
+    ///
+    /// # Eksamples
+    ///
+    /// ```
+    /// # use chess::*;
+    /// let game = Game::new();
+    /// println!("{}", game.board_to_string());
+    /// ```
+    pub fn board_to_string(&self) -> String {
+        let mut s = String::new();
+        let mut y: usize;
+
+        for y1 in 0..8 {
+            y = 7 - y1;
+            for x in 0..8 {
+                s.push_str( if let Some(p) = self.get_from_pos((x, y)) {
+                    match p.color {
+                        Color::White => {
+                            match p.kind {
+                                Kind::Pawn => "P",
+                                Kind::Rook => "R",
+                                Kind::Knight => "N",
+                                Kind::Bishop => "B",
+                                Kind::Queen => "Q",
+                                Kind::King => "K",
+                            }
+                        },
+                        Color::Black => {
+                            match p.kind {
+                                Kind::Pawn => "p",
+                                Kind::Rook => "r",
+                                Kind::Knight => "n",
+                                Kind::Bishop => "b",
+                                Kind::Queen => "q",
+                                Kind::King => "k",
+                            }
+                        },
+                    }
+                } else {
+                    " "
+                });
+            }
+            
+            if y != 0 {
+                s.push_str("\n");
+            }
+        }
+        s
+    }
 }
 
 /// Turns a position on the board from a string, like B3, to a tuple, like (1, 2).
@@ -1147,5 +1288,20 @@ mod tests {
         game.set_at_pos((6, 7), Some(&WHITE[5]));
 
         assert!(game.check_for_check((0,0), (1,0)));
+    }
+
+    #[test]
+    fn test_print() {
+        let game = Game::new();
+        let board = game.board_to_string();
+        assert_eq!(board,
+                   "rnbqkbnr\
+                  \npppppppp\
+                  \n        \
+                  \n        \
+                  \n        \
+                  \n        \
+                  \nPPPPPPPP\
+                  \nRNBQKBNR");
     }
 }
