@@ -475,10 +475,18 @@ impl<'a> Game<'a> {
         if from.0 > 7 || from.1 > 7 || to.0 > 7 || to.1 > 7 {
             return None;
         }
-        let moving = self.get_from_pos(from);
+        let mut moving = self.get_from_pos(from);
         let other = self.get_from_pos(to);
         match moving {
-            Some(_) => {
+            Some(p) => {
+                if p.kind == Kind::Pawn && other == None {
+                    if p.color == Color::White && to.1 == 7 {
+                        moving = Some(&WHITE[4]);
+                    } else if p.color == Color::Black && to.1 == 0 {
+                        moving = Some(&BLACK[4]);
+                    }
+                }
+
                 self.set_at_pos(to, moving);
                 self.set_at_pos(from, None);
                 other
