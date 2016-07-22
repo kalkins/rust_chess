@@ -28,6 +28,40 @@ fn pawn() {
     game.set_at_pos((2, 1), Some(&BLACK[0]));
     game.move_piece((2, 1), (2, 0));
     assert_eq!(game.get_from_pos((2, 0)), Some(&BLACK[4]));
+
+    // En passant
+    game.clear();
+    game.set_at_pos((4, 6), Some(&BLACK[0]));
+    game.set_at_pos((5, 4), Some(&WHITE[0]));
+    for v in game.valid_moves((4, 6)) {
+        if let Some(m) = v.last() {
+            if (m.1).0 == 4 && (m.1).1 == 4 {
+                game.move_pieces(&v);
+                break;
+            }
+        }
+    }
+    for v in game.valid_moves((5, 4)) {
+        if let Some(m) = v.last() {
+            if (m.1).0 == 4 && (m.1).1 == 5 {
+                assert_eq!(game.move_pieces(&v), Some(&BLACK[0]));
+                break;
+            }
+        }
+    }
+    assert_eq!(game.get_from_pos((4, 4)), None);
+    assert_eq!(game.get_from_pos((4, 5)), Some(&WHITE[0]));
+
+    game.clear();
+    game.set_at_pos((4, 4), Some(&BLACK[0]));
+    game.set_at_pos((5, 4), Some(&WHITE[0]));
+    for v in game.valid_moves((5, 4)) {
+        if let Some(m) = v.last() {
+            if (m.1).0 == 4 && (m.1).1 == 5 {
+                assert!(false);
+            }
+        }
+    }
 }
 
 #[test]

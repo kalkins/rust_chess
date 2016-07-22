@@ -154,6 +154,7 @@ pub struct Game<'a> {
     board: [[Option<&'a Piece>; 8]; 8],
     ignore_kings: bool,
     ignore_check: bool,
+    last: ((usize, usize), (usize, usize)),
 }
 
 impl<'a> Game<'a> {
@@ -183,7 +184,7 @@ impl<'a> Game<'a> {
         board[4][7] = Some(&BLACK[5]);
         board[3][7] = Some(&BLACK[4]);
 
-        Game { turn: 1, board: board, ignore_kings: false, ignore_check: false}
+        Game { turn: 1, board: board, ignore_kings: false, ignore_check: false, last: ((0,0), (0,0)) }
     }
 
     /// Creates a new game with an empty board.
@@ -197,7 +198,7 @@ impl<'a> Game<'a> {
     /// assert_eq!(game.by_color(Color::Black).len(), 0);
     /// ```
     pub fn new_empty() -> Game<'a> {
-        Game { turn: 1, board: [[None; 8]; 8], ignore_kings: false, ignore_check: false }
+        Game { turn: 1, board: [[None; 8]; 8], ignore_kings: false, ignore_check: false, last: ((0,0), (0,0)) }
     }
 
     /// Clears the board.
@@ -214,6 +215,7 @@ impl<'a> Game<'a> {
     /// ```
     pub fn clear(&mut self) {
         self.board = [[None; 8]; 8];
+        self.last = ((0,0), (0,0));
     }
 
     /// Tells the game whether to ignore a lack of kings.
@@ -489,6 +491,7 @@ impl<'a> Game<'a> {
 
                 self.set_at_pos(to, moving);
                 self.set_at_pos(from, None);
+                self.last = (from, to);
                 other
             },
             None    => None,
@@ -671,6 +674,7 @@ impl<'a> Game<'a> {
         match self.get_from_pos(pos) {
             None        => {},
             Some(piece) => {
+                let mut passant: bool;
                 match piece.kind {
                     Kind::Pawn => {
                         match piece.color {
@@ -688,13 +692,43 @@ impl<'a> Game<'a> {
                                 }
 
                                 if pos.0 > 0 && pos.1 < 7{
+                                    passant = false;
+                                    if let Some(other) = self.get_from_pos((pos.0 - 1, pos.1)) {
+                                        if other.color != piece.color &&
+                                            (self.last.0).0 == pos.0 - 1 &&
+                                            (self.last.0).1 == pos.1 + 2 &&
+                                            (self.last.1).0 == pos.0 - 1 &&
+                                            (self.last.1).1 == pos.1 {
+                                            passant = true;
+                                            result.push(vec![
+                                                        ((pos.0, pos.1), (pos.0-1, pos.1)),
+                                                        ((pos.0-1, pos.1), (pos.0-1, pos.1+1))]);
+                                        }
+                                    }
                                     if let Some(_) = self.get_from_pos((pos.0 - 1, pos.1 + 1)) {
-                                        moves.push((pos.0 - 1, pos.1 + 1));
+                                        if !passant {
+                                            moves.push((pos.0 - 1, pos.1 + 1));
+                                        }
                                     }
                                 }
                                 if pos.0 < 7 && pos.1 < 7{
+                                    passant = false;
+                                    if let Some(other) = self.get_from_pos((pos.0 + 1, pos.1)) {
+                                        if other.color != piece.color &&
+                                            (self.last.0).0 == pos.0 + 1 &&
+                                            (self.last.0).1 == pos.1 + 2 &&
+                                            (self.last.1).0 == pos.0 + 1 &&
+                                            (self.last.1).1 == pos.1 {
+                                            passant = true;
+                                            result.push(vec![
+                                                        ((pos.0, pos.1), (pos.0+1, pos.1)),
+                                                        ((pos.0+1, pos.1), (pos.0+1, pos.1+1))]);
+                                        }
+                                    }
                                     if let Some(_) = self.get_from_pos((pos.0 + 1, pos.1 + 1)) {
-                                        moves.push((pos.0 + 1, pos.1 + 1));
+                                        if !passant {
+                                            moves.push((pos.0 + 1, pos.1 + 1));
+                                        }
                                     }
                                 }
                             },
@@ -712,13 +746,43 @@ impl<'a> Game<'a> {
                                 }
 
                                 if pos.0 > 0 && pos.1 > 0 {
+                                    passant = false;
+                                    if let Some(other) = self.get_from_pos((pos.0 - 1, pos.1)) {
+                                        if other.color != piece.color &&
+                                            (self.last.0).0 == pos.0 - 1 &&
+                                            (self.last.0).1 == pos.1 - 2 &&
+                                            (self.last.1).0 == pos.0 - 1 &&
+                                            (self.last.1).1 == pos.1 {
+                                            passant = true;
+                                            result.push(vec![
+                                                        ((pos.0, pos.1), (pos.0-1, pos.1)),
+                                                        ((pos.0-1, pos.1), (pos.0-1, pos.1-1))]);
+                                        }
+                                    }
                                     if let Some(_) = self.get_from_pos((pos.0 - 1, pos.1 - 1)) {
-                                        moves.push((pos.0 - 1, pos.1 - 1));
+                                        if !passant {
+                                            moves.push((pos.0 - 1, pos.1 - 1));
+                                        }
                                     }
                                 }
                                 if pos.0 < 7 && pos.1 > 0 {
+                                    passant = false;
+                                    if let Some(other) = self.get_from_pos((pos.0 + 1, pos.1)) {
+                                        if other.color != piece.color &&
+                                            (self.last.0).0 == pos.0 + 1 &&
+                                            (self.last.0).1 == pos.1 - 2 &&
+                                            (self.last.1).0 == pos.0 + 1 &&
+                                            (self.last.1).1 == pos.1 {
+                                            passant = true;
+                                            result.push(vec![
+                                                        ((pos.0, pos.1), (pos.0+1, pos.1)),
+                                                        ((pos.0+1, pos.1), (pos.0+1, pos.1-1))]);
+                                        }
+                                    }
                                     if let Some(_) = self.get_from_pos((pos.0 + 1, pos.1 - 1)) {
-                                        moves.push((pos.0 + 1, pos.1 - 1));
+                                        if !passant {
+                                            moves.push((pos.0 + 1, pos.1 - 1));
+                                        }
                                     }
                                 }
                             },
