@@ -624,10 +624,7 @@ impl<'a> Game<'a> {
 
     fn check_valid_moves(&self, pos: (usize, usize), test_check: bool) -> Vec<Vec<((usize, usize), (usize, usize))>> {
         info!("check_valid_moves called with args: pos: ({}, {}), test_check: {}", pos.0, pos.1, test_check);
-        let mut result: Vec<Vec<((usize, usize), (usize, usize))>> = Vec::new();
-        for v in self.raw_moves(pos) {
-            result.push(vec![(pos, v)]);
-        }
+        let mut result: Vec<Vec<((usize, usize), (usize, usize))>> = self.raw_moves(pos);
 
         let mut index: Vec<usize> = Vec::new();
         let mut from: (usize, usize);
@@ -659,8 +656,10 @@ impl<'a> Game<'a> {
         result
     }
 
-    fn raw_moves(&self, pos: (usize, usize)) -> Vec<(usize, usize)> {
+    fn raw_moves(&self, pos: (usize, usize)) -> Vec<Vec<((usize, usize), (usize, usize))>> {
+        let mut result: Vec<Vec<((usize, usize), (usize, usize))>> = Vec::new();
         let mut moves: Vec<(usize, usize)> = Vec::new();
+
         match self.get_from_pos(pos) {
             None        => {},
             Some(piece) => {
@@ -942,8 +941,12 @@ impl<'a> Game<'a> {
                 }
             },
         }
+
+        for v in moves {
+            result.push(vec![(pos, v)]);
+        }
         
-        moves
+        result
     }
 
 
