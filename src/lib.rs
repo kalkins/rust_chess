@@ -155,6 +155,10 @@ pub struct Game<'a> {
     ignore_kings: bool,
     ignore_check: bool,
     last: ((usize, usize), (usize, usize)),
+    black_can_castle_right: bool,
+    black_can_castle_left: bool,
+    white_can_castle_right: bool,
+    white_can_castle_left: bool,
 }
 
 impl<'a> Game<'a> {
@@ -184,7 +188,9 @@ impl<'a> Game<'a> {
         board[4][7] = Some(&BLACK[5]);
         board[3][7] = Some(&BLACK[4]);
 
-        Game { turn: 1, board: board, ignore_kings: false, ignore_check: false, last: ((0,0), (0,0)) }
+        Game { turn: 1, board: board, ignore_kings: false, ignore_check: false,
+               last: ((0,0), (0,0)), white_can_castle_right: true, black_can_castle_right: true,
+               white_can_castle_left: true, black_can_castle_left: true }
     }
 
     /// Creates a new game with an empty board.
@@ -198,7 +204,9 @@ impl<'a> Game<'a> {
     /// assert_eq!(game.by_color(Color::Black).len(), 0);
     /// ```
     pub fn new_empty() -> Game<'a> {
-        Game { turn: 1, board: [[None; 8]; 8], ignore_kings: false, ignore_check: false, last: ((0,0), (0,0)) }
+        Game { turn: 1, board: [[None; 8]; 8], ignore_kings: false, ignore_check: false,
+               last: ((0,0), (0,0)), white_can_castle_right: true, black_can_castle_right: true,
+               white_can_castle_left: true, black_can_castle_left: true }
     }
 
     /// Clears the board.
@@ -486,6 +494,34 @@ impl<'a> Game<'a> {
                         moving = Some(&WHITE[4]);
                     } else if p.color == Color::Black && to.1 == 0 {
                         moving = Some(&BLACK[4]);
+                    }
+                } else if p.kind == Kind::King {
+                    match p.color {
+                        Color::White => {
+                            self.white_can_castle_left = false;
+                            self.white_can_castle_right = false;
+                        },
+                        Color::Black => {
+                            self.black_can_castle_left = false;
+                            self.black_can_castle_right = false;
+                        },
+                    }
+                } else if p.kind == Kind::Rook {
+                    match p.color {
+                        Color::White => {
+                            if from.0 == 0 {
+                                self.white_can_castle_left = false;
+                            } else if from.0 == 7 {
+                                self.white_can_castle_right = false;
+                            }
+                        },
+                        Color::Black => {
+                            if from.0 == 0 {
+                                self.black_can_castle_left = false;
+                            } else if from.0 == 7 {
+                                self.black_can_castle_right = false;
+                            }
+                        },
                     }
                 }
 
@@ -1008,6 +1044,125 @@ impl<'a> Game<'a> {
                         }
                         if pos.1 < 7 {
                             moves.push((pos.0, pos.1 + 1));
+                        }
+
+                        let mut left: Vec<((usize, usize), (usize, usize))> = Vec::new();
+                        let mut right: Vec<((usize, usize), (usize, usize))> = Vec::new();
+                        let mut game = self.clone();
+                        let mut p: (usize, usize);
+                        match piece.color {
+                            Color::White => {
+                                if pos.0 == 4 && pos.1 == 0 {
+                                    if self.white_can_castle_left {
+                                        for i in 1..4 {
+                                            if i == 3 {
+                                                if let None = game.get_from_pos((1, pos.1)) {
+                                                    if let Some(rook) = game.get_from_pos((0, pos.1)) {
+                                                        if rook.color == piece.color && rook.kind == Kind::Rook {
+                                                            left.push( ((0, pos.1), (3, pos.1)) );
+                                                            result.push(left);
+                                                        }
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            p = (pos.0 - i, pos.1);
+
+                                            if let Some(_) = game.move_piece(pos, p) {
+                                                break;
+                                            }
+
+                                            if game.in_check(piece.color) {
+                                                break;
+                                            }
+
+                                            left.push( ((p.0 + 1, p.1), p) );
+                                        }
+                                    }
+                                    if self.white_can_castle_right {
+                                        for i in 1..4 {
+                                            if i == 3 {
+                                                if let None = game.get_from_pos((6, pos.1)) {
+                                                    if let Some(rook) = game.get_from_pos((7, pos.1)) {
+                                                        if rook.color == piece.color && rook.kind == Kind::Rook {
+                                                            right.push( ((7, pos.1), (5, pos.1)) );
+                                                            result.push(right);
+                                                        }
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            p = (pos.0 + i, pos.1);
+
+                                            if let Some(_) = game.move_piece(pos, p) {
+                                                break;
+                                            }
+
+                                            if game.in_check(piece.color) {
+                                                break;
+                                            }
+
+                                            right.push( ((p.0 - 1, p.1), p) );
+                                        }
+                                    }
+                                }
+                            },
+                            Color::Black => {
+                                if pos.0 == 4 && pos.1 == 7 {
+                                    if self.black_can_castle_left {
+                                        for i in 1..4 {
+                                            if i == 3 {
+                                                if let None = game.get_from_pos((1, pos.1)) {
+                                                    if let Some(rook) = game.get_from_pos((0, pos.1)) {
+                                                        if rook.color == piece.color && rook.kind == Kind::Rook {
+                                                            left.push( ((0, pos.1), (3, pos.1)) );
+                                                            result.push(left);
+                                                        }
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            p = (pos.0 - i, pos.1);
+
+                                            if let Some(_) = game.move_piece(pos, p) {
+                                                break;
+                                            }
+
+                                            if game.in_check(piece.color) {
+                                                break;
+                                            }
+
+                                            left.push( ((p.0 + 1, p.1), p) );
+                                        }
+                                    }
+                                    if self.black_can_castle_right {
+                                        for i in 1..4 {
+                                            if i == 3 {
+                                                if let None = game.get_from_pos((6, pos.1)) {
+                                                    if let Some(rook) = game.get_from_pos((7, pos.1)) {
+                                                        if rook.color == piece.color && rook.kind == Kind::Rook {
+                                                            right.push( ((7, pos.1), (5, pos.1)) );
+                                                            result.push(right);
+                                                        }
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            p = (pos.0 + i, pos.1);
+
+                                            if let Some(_) = game.move_piece(pos, p) {
+                                                break;
+                                            }
+
+                                            if game.in_check(piece.color) {
+                                                break;
+                                            }
+
+                                            right.push( ((p.0 - 1, p.1), p) );
+                                        }
+                                    }
+                                }
+                            },
                         }
                     },
                 }

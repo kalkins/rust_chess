@@ -105,4 +105,44 @@ fn king() {
     game.set_at_pos((6, 7), Some(&WHITE[5]));
 
     assert_eq!(game.valid_moves((0,0)).len(), 0);
+
+    let mut found = false;
+    game = Game::new();
+    game.set_at_pos((5, 0), None);
+
+    for v in game.valid_moves((4, 0)) {
+        assert_eq!(v.len(), 1);
+    }
+
+    game.set_at_pos((6, 0), None);
+    for v in game.valid_moves((4, 0)) {
+        if v.len() == 3 {
+            found = true;
+            break;
+        }
+    }
+    assert!(found);
+
+    found = false;
+    game.set_at_pos((3, 0), None);
+    game.set_at_pos((2, 0), None);
+    game.set_at_pos((6, 0), Some(&WHITE[2]));
+    for v in game.valid_moves((4, 0)) {
+        assert_eq!(v.len(), 1);
+    }
+
+    game.set_at_pos((1, 0), None);
+    for v in game.valid_moves((4, 0)) {
+        if v.len() == 3 {
+            found = true;
+            break;
+        }
+    }
+    assert!(found);
+
+    game.set_at_pos((3, 1), None);
+    game.set_at_pos((3, 5), Some(&BLACK[4]));
+    for v in game.valid_moves((4, 0)) {
+        assert_eq!(v.len(), 1);
+    }
 }
