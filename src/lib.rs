@@ -731,6 +731,7 @@ impl<'a> Game<'a> {
                                     passant = false;
                                     if let Some(other) = self.get_from_pos((pos.0 - 1, pos.1)) {
                                         if other.color != piece.color &&
+                                            pos.1 == 4 &&
                                             (self.last.0).0 == pos.0 - 1 &&
                                             (self.last.0).1 == pos.1 + 2 &&
                                             (self.last.1).0 == pos.0 - 1 &&
@@ -751,6 +752,7 @@ impl<'a> Game<'a> {
                                     passant = false;
                                     if let Some(other) = self.get_from_pos((pos.0 + 1, pos.1)) {
                                         if other.color != piece.color &&
+                                            pos.1 == 4 &&
                                             (self.last.0).0 == pos.0 + 1 &&
                                             (self.last.0).1 == pos.1 + 2 &&
                                             (self.last.1).0 == pos.0 + 1 &&
@@ -785,6 +787,7 @@ impl<'a> Game<'a> {
                                     passant = false;
                                     if let Some(other) = self.get_from_pos((pos.0 - 1, pos.1)) {
                                         if other.color != piece.color &&
+                                            pos.1 == 3 &&
                                             (self.last.0).0 == pos.0 - 1 &&
                                             (self.last.0).1 == pos.1 - 2 &&
                                             (self.last.1).0 == pos.0 - 1 &&
@@ -805,6 +808,7 @@ impl<'a> Game<'a> {
                                     passant = false;
                                     if let Some(other) = self.get_from_pos((pos.0 + 1, pos.1)) {
                                         if other.color != piece.color &&
+                                            pos.1 == 3 &&
                                             (self.last.0).0 == pos.0 + 1 &&
                                             (self.last.0).1 == pos.1 - 2 &&
                                             (self.last.1).0 == pos.0 + 1 &&
