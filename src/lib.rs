@@ -676,27 +676,31 @@ impl<'a> Game<'a> {
         let mut index: Vec<usize> = Vec::new();
         let mut from: (usize, usize);
         let mut to: (usize, usize);
-        for i in 0..result.len() {
+        'outer: for i in 0..result.len() {
             for j in 0..result[i].len() {
                 from = result[i][j].0;
                 to = result[i][j].1;
                 if from.0 > 7 || from.1 > 7 || to.0 > 7 || to.1 > 7 {
                     info!("from: ({}, {}) to: ({}, {}) excluded, being out of bounds", from.0, from.1, to.0, to.1);
                     index.insert(0, i);
+                    continue 'outer;
                 } else if let Some(piece) = self.get_from_pos(from) {
                     if let Some(other) = self.get_from_pos(to) {
                         if other.color == piece.color {
                             info!("from: ({}, {}) to: ({}, {}) excluded because it was targeting a friendly", from.0, from.1, to.0, to.1);
                             index.insert(0, i);
+                            continue 'outer;
                         }
                     } else if test_check && self.check_for_check(from, to) {
                         info!("from: ({}, {}) to: ({}, {}) excluded because it would put it in check", from.0, from.1, to.0, to.1);
                         index.insert(0, i);
+                        continue 'outer;
                     }
                 }
             }
         }
         for v in index {
+            info!("check_valid_moves: Removing move at index {}", v);
             result.remove(v);
         }
 
