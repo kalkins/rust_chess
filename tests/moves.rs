@@ -90,6 +90,17 @@ fn queen() {
 	log();
     let moves = setup((3,3), &WHITE[4]);
     assert_eq!(moves.len(), 27);
+
+    let mut game = Game::new();
+    assert_eq!(game.valid_moves((3,0)).len(), 0);
+    game.set_at_pos((1,0), None);
+    game.set_at_pos((2,0), None);
+    assert_eq!(game.valid_moves((3,0)).len(), 2);
+
+    game.set_at_pos((3,1), None);
+    assert_eq!(game.valid_moves((3,0)).len(), 8);
+    game.move_piece((4,0), (3,1));
+    assert_eq!(game.valid_moves((3,0)).len(), 3);
 }
 
 #[test]
