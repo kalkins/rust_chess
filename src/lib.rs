@@ -676,7 +676,9 @@ impl<'a> Game<'a> {
         let mut index: Vec<usize> = Vec::new();
         let mut from: (usize, usize);
         let mut to: (usize, usize);
+        let mut game: Game;
         'outer: for i in 0..result.len() {
+            game = self.clone();
             for j in 0..result[i].len() {
                 from = result[i][j].0;
                 to = result[i][j].1;
@@ -684,19 +686,23 @@ impl<'a> Game<'a> {
                     info!("from: ({}, {}) to: ({}, {}) excluded, being out of bounds", from.0, from.1, to.0, to.1);
                     index.insert(0, i);
                     continue 'outer;
-                } else if let Some(piece) = self.get_from_pos(from) {
-                    if let Some(other) = self.get_from_pos(to) {
+                } else if let Some(piece) = game.get_from_pos(from) {
+                    if let Some(other) = game.get_from_pos(to) {
                         if other.color == piece.color {
                             info!("from: ({}, {}) to: ({}, {}) excluded because it was targeting a friendly", from.0, from.1, to.0, to.1);
                             index.insert(0, i);
                             continue 'outer;
                         }
-                    } else if test_check && self.check_for_check(from, to) {
-                        info!("from: ({}, {}) to: ({}, {}) excluded because it would put it in check", from.0, from.1, to.0, to.1);
+                    }
+                    if test_check && game.check_for_check(from, to) {
+                        info!("from: ({}, {}) to: ({}, {}) at index {} excluded because it would put it in check", from.0, from.1, to.0, to.1, i);
                         index.insert(0, i);
                         continue 'outer;
                     }
+                } else {
+                    panic!("No piece at ({}, {})", from.0, from.1);
                 }
+                game.move_piece(from, to);
             }
         }
         for v in index {
