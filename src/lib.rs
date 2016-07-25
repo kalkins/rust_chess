@@ -726,8 +726,10 @@ impl<'a> Game<'a> {
                         match piece.color {
                             Color::White => {
                                 if pos.1 == 1 {
-                                    if let None = self.get_from_pos((pos.0, pos.1 + 2)) {
-                                        moves.push((pos.0, pos.1 + 2));
+                                    if let None = self.get_from_pos((pos.0, pos.1 + 1)) {
+                                        if let None = self.get_from_pos((pos.0, pos.1 + 2)) {
+                                            moves.push((pos.0, pos.1 + 2));
+                                        }
                                     }
                                 }
 
@@ -782,8 +784,10 @@ impl<'a> Game<'a> {
                             },
                             Color::Black => {
                                 if pos.1 == 6 {
-                                    if let None = self.get_from_pos((pos.0, pos.1 - 2)) {
-                                        moves.push((pos.0, pos.1 - 2));
+                                    if let None = self.get_from_pos((pos.0, pos.1 - 1)) {
+                                        if let None = self.get_from_pos((pos.0, pos.1 - 2)) {
+                                            moves.push((pos.0, pos.1 - 2));
+                                        }
                                     }
                                 }
 
