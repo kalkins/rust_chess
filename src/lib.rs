@@ -128,7 +128,7 @@ impl std::fmt::Display for Piece {
 /// and (7,7) corresponds to H8 in the top right corner, seen from the white side.
 ///
 /// The pieces are stored as Option<&Piece>, and are references to the pieces in the WHITE and
-/// BLACK array. 
+/// BLACK array.
 ///
 /// # Eksamples
 ///
@@ -136,7 +136,7 @@ impl std::fmt::Display for Piece {
 /// # use chess::*;
 /// // Create a new game, with all pieces in their initial position.
 /// let mut game = Game::new();
-/// 
+///
 /// // The piece at C1 is supposed to be a bishop.
 /// let bishop = game.get_from_pos((2,0));
 /// if let Some(piece) = bishop {
@@ -237,7 +237,7 @@ impl<'a> Game<'a> {
     /// # use chess::*;
     /// let mut game = Game::new_empty();
     /// game.set_at_pos((3, 3), Some(&WHITE[3]));
-    /// 
+    ///
     /// // This would cause a panic
     /// // game.valid_moves((3, 3));
     ///
@@ -1180,7 +1180,7 @@ impl<'a> Game<'a> {
         for v in moves {
             result.push(vec![(pos, v)]);
         }
-        
+
         result
     }
 
@@ -1188,7 +1188,7 @@ impl<'a> Game<'a> {
     /// Sees whether the king of the given color is currently in check or not.
     ///
     /// # Eksamples
-    /// 
+    ///
     /// ```
     /// # use chess::*;
     /// // Clear the board, then put a black king at C5, and a white pawn at D4.
@@ -1269,7 +1269,7 @@ impl<'a> Game<'a> {
     ///
     /// // Add another queen at C3
     /// game.set_at_pos((2, 2), Some(&WHITE[4]));
-    /// 
+    ///
     /// // Now the king is in check, and can't move, so white has won by checkmate.
     /// assert_eq!(game.check_victory(), Some((Victory::Checkmate, Color::White)));
     /// ```
@@ -1401,7 +1401,7 @@ impl<'a> Game<'a> {
                     " "
                 });
             }
-            
+
             if y != 0 {
                 s.push_str("\n");
             }
