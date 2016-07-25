@@ -1066,12 +1066,13 @@ impl<'a> Game<'a> {
 
                         let mut left: Vec<((usize, usize), (usize, usize))> = Vec::new();
                         let mut right: Vec<((usize, usize), (usize, usize))> = Vec::new();
-                        let mut game = self.clone();
+                        let mut game: Game;
                         let mut p: (usize, usize);
                         match piece.color {
                             Color::White => {
                                 if pos.0 == 4 && pos.1 == 0 {
                                     if self.white_can_castle_left {
+                                        game = self.clone();
                                         for i in 1..4 {
                                             if i == 3 {
                                                 if let None = game.get_from_pos((1, pos.1)) {
@@ -1098,6 +1099,7 @@ impl<'a> Game<'a> {
                                         }
                                     }
                                     if self.white_can_castle_right {
+                                        game = self.clone();
                                         for i in 1..4 {
                                             if i == 3 {
                                                 if let None = game.get_from_pos((6, pos.1)) {
@@ -1128,6 +1130,7 @@ impl<'a> Game<'a> {
                             Color::Black => {
                                 if pos.0 == 4 && pos.1 == 7 {
                                     if self.black_can_castle_left {
+                                        game = self.clone();
                                         for i in 1..4 {
                                             if i == 3 {
                                                 if let None = game.get_from_pos((1, pos.1)) {
@@ -1154,6 +1157,7 @@ impl<'a> Game<'a> {
                                         }
                                     }
                                     if self.black_can_castle_right {
+                                        game = self.clone();
                                         for i in 1..4 {
                                             if i == 3 {
                                                 if let None = game.get_from_pos((6, pos.1)) {
