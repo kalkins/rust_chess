@@ -94,7 +94,7 @@ impl std::fmt::Display for Color {
 #[derive(PartialEq, Debug, Clone)]
 pub enum Victory {
     Checkmate,
-    Remi,
+    Stalemate,
     Draw,
 }
 
@@ -102,7 +102,7 @@ impl std::fmt::Display for Victory {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
             Victory::Checkmate => write!(f, "checkmate"),
-            Victory::Remi => write!(f, "remi"),
+            Victory::Stalemate => write!(f, "stalemate"),
             Victory::Draw => write!(f, "draw"),
         }
     }
@@ -1289,8 +1289,8 @@ impl<'a> Game<'a> {
     /// game.set_at_pos((1, 2), Some(&WHITE[4]));
     /// game.set_at_pos((1, 1), None);
     ///
-    /// // Now the king isn't in check, but the king can't move so it's a remi victory.
-    /// assert_eq!(game.check_victory(), Some((Victory::Remi, Color::White)));
+    /// // Now the king isn't in check, but the king can't move so it's a stalemate draw.
+    /// assert_eq!(game.check_victory(), Some((Victory::Stalemate, Color::White)));
     ///
     /// // Add another queen at C3
     /// game.set_at_pos((2, 2), Some(&WHITE[4]));
@@ -1336,7 +1336,7 @@ impl<'a> Game<'a> {
             if self.in_check(color) {
                 return Some((Victory::Checkmate, opposite));
             } else {
-                return Some((Victory::Remi, opposite));
+                return Some((Victory::Stalemate, opposite));
             }
         }
 
