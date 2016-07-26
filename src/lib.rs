@@ -1460,6 +1460,34 @@ impl<'a> Game<'a> {
     fn save_board(&mut self) {
         self.board_history.push(self.board);
     }
+
+    /// Checks whether there has occured a three fold repetition.
+    pub fn three_fold_repetition(&self) -> bool {
+        if self.board_history.len() >= 3 {
+            info!("Checking for three fold repetition");
+            let mut matches = 0;
+            let last = match self.board_history.last() {
+                Some(v) => v,
+                None => panic!(),
+            };
+            'rep: for v in &self.board_history {
+                for x in 0..8 {
+                    for y in 0..8 {
+                        if v[x][y] != last[x][y] {
+                            continue 'rep;
+                        }
+                    }
+                }
+                matches += 1;
+            }
+
+            if matches >= 3 {
+                return true;
+            }
+        }
+
+        false
+    }
 }
 
 /// Turns a position on the board from a string, like B3, to a tuple, like (1, 2).

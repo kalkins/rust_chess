@@ -169,3 +169,15 @@ fn five_fold_repetition() {
     }
     assert_eq!(game.check_victory(), Some((Victory::Draw, Color::White)));
 }
+
+#[test]
+fn three_fold_repetition() {
+    log();
+    let mut game = Game::new();
+    for _ in 0..2 {
+        assert!(!game.three_fold_repetition());
+        game.move_pieces(&vec![((1,0), (2,2)), ((6,7), (7,5))]);
+        game.move_pieces(&vec![((2,2), (1,0)), ((7,5), (6,7))]);
+    }
+    assert!(game.three_fold_repetition());
+}
