@@ -706,10 +706,10 @@ impl<'a> Game<'a> {
             }
         }
         for v in index {
-            info!("check_valid_moves: Removing move at index {}", v);
             result.remove(v);
         }
 
+        info!("check_valid_moves finished");
         result
     }
 
