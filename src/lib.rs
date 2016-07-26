@@ -95,6 +95,7 @@ impl std::fmt::Display for Color {
 pub enum Victory {
     Checkmate,
     Remi,
+    Draw,
 }
 
 impl std::fmt::Display for Victory {
@@ -102,6 +103,7 @@ impl std::fmt::Display for Victory {
         match *self {
             Victory::Checkmate => write!(f, "checkmate"),
             Victory::Remi => write!(f, "remi"),
+            Victory::Draw => write!(f, "draw"),
         }
     }
 }
@@ -159,6 +161,7 @@ pub struct Game<'a> {
     black_can_castle_left: bool,
     white_can_castle_right: bool,
     white_can_castle_left: bool,
+    board_history: Vec<[[Option<&'a Piece>; 8]; 8]>,
 }
 
 impl<'a> Game<'a> {
@@ -188,9 +191,12 @@ impl<'a> Game<'a> {
         board[4][7] = Some(&BLACK[5]);
         board[3][7] = Some(&BLACK[4]);
 
-        Game { turn: 1, board: board, ignore_kings: false, ignore_check: false,
+        let mut game = Game { turn: 1, board: board, ignore_kings: false, ignore_check: false,
                last: ((0,0), (0,0)), white_can_castle_right: true, black_can_castle_right: true,
-               white_can_castle_left: true, black_can_castle_left: true }
+               white_can_castle_left: true, black_can_castle_left: true, board_history: Vec::new(), };
+        game.save_board();
+
+        game
     }
 
     /// Creates a new game with an empty board.
@@ -204,9 +210,12 @@ impl<'a> Game<'a> {
     /// assert_eq!(game.by_color(Color::Black).len(), 0);
     /// ```
     pub fn new_empty() -> Game<'a> {
-        Game { turn: 1, board: [[None; 8]; 8], ignore_kings: false, ignore_check: false,
+        let mut game = Game { turn: 1, board: [[None; 8]; 8], ignore_kings: false, ignore_check: false,
                last: ((0,0), (0,0)), white_can_castle_right: true, black_can_castle_right: true,
-               white_can_castle_left: true, black_can_castle_left: true }
+               white_can_castle_left: true, black_can_castle_left: true, board_history: Vec::new(), };
+        game.save_board();
+
+        game
     }
 
     /// Clears the board.
@@ -596,7 +605,9 @@ impl<'a> Game<'a> {
             tmp = self.move_piece(from, to);
             if let Some(_) = tmp {
                 captured = tmp;
+                self.board_history.clear();
             }
+            self.save_board();
         }
 
         captured
@@ -1258,7 +1269,7 @@ impl<'a> Game<'a> {
     }
 
     /// Checks whether the game is won, and returns the victory type and the color of the victor,
-    /// or None if the game isn't won yet.
+    /// or None if the game isn't won yet. In case of a draw a random color is returned.
     ///
     /// # Eksamples
     ///
@@ -1288,6 +1299,29 @@ impl<'a> Game<'a> {
     /// assert_eq!(game.check_victory(), Some((Victory::Checkmate, Color::White)));
     /// ```
     pub fn check_victory(&self) -> Option<(Victory, Color)> {
+        if self.board_history.len() >= 5 {
+            info!("Checking for five fold repetition");
+            let mut matches = 0;
+            let last = match self.board_history.last() {
+                Some(v) => v,
+                None => panic!(),
+            };
+            'rep: for v in &self.board_history {
+                for x in 0..8 {
+                    for y in 0..8 {
+                        if v[x][y] != last[x][y] {
+                            continue 'rep;
+                        }
+                    }
+                }
+                matches += 1;
+            }
+
+            if matches >= 5 {
+                return Some((Victory::Draw, Color::White));
+            }
+        }
+
         'outer: for color in vec![Color::Black, Color::White] {
             let pieces = self.by_color(color);
 
@@ -1421,6 +1455,10 @@ impl<'a> Game<'a> {
             }
         }
         s
+    }
+
+    fn save_board(&mut self) {
+        self.board_history.push(self.board);
     }
 }
 

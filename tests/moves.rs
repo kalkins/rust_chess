@@ -157,3 +157,15 @@ fn king() {
         assert_eq!(v.len(), 1);
     }
 }
+
+#[test]
+fn five_fold_repetition() {
+    log();
+    let mut game = Game::new();
+    for _ in 0..4 {
+        assert_eq!(game.check_victory(), None);
+        game.move_pieces(&vec![((1,0), (2,2)), ((6,7), (7,5))]);
+        game.move_pieces(&vec![((2,2), (1,0)), ((7,5), (6,7))]);
+    }
+    assert_eq!(game.check_victory(), Some((Victory::Draw, Color::White)));
+}
