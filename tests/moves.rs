@@ -181,3 +181,16 @@ fn three_fold_repetition() {
     }
     assert!(game.three_fold_repetition());
 }
+
+#[test]
+fn fifty_move_rule() {
+    log();
+    let mut game = Game::new();
+    for _ in 0..12 {
+        assert!(!game.fifty_move_rule());
+        game.move_pieces(&vec![((1,0), (2,2)), ((6,7), (7,5))]);
+        game.move_pieces(&vec![((2,2), (1,0)), ((7,5), (6,7))]);
+    }
+    game.move_pieces(&vec![((1,0), (2,2)), ((6,7), (7,5))]);
+    assert!(game.fifty_move_rule());
+}

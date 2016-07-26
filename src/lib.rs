@@ -162,6 +162,7 @@ pub struct Game<'a> {
     white_can_castle_right: bool,
     white_can_castle_left: bool,
     board_history: Vec<[[Option<&'a Piece>; 8]; 8]>,
+    seventy_five_move_rule: u32,
 }
 
 impl<'a> Game<'a> {
@@ -193,7 +194,8 @@ impl<'a> Game<'a> {
 
         let mut game = Game { turn: 1, board: board, ignore_kings: false, ignore_check: false,
                last: ((0,0), (0,0)), white_can_castle_right: true, black_can_castle_right: true,
-               white_can_castle_left: true, black_can_castle_left: true, board_history: Vec::new(), };
+               white_can_castle_left: true, black_can_castle_left: true, board_history: Vec::new(),
+               seventy_five_move_rule: 0, };
         game.save_board();
 
         game
@@ -212,7 +214,8 @@ impl<'a> Game<'a> {
     pub fn new_empty() -> Game<'a> {
         let mut game = Game { turn: 1, board: [[None; 8]; 8], ignore_kings: false, ignore_check: false,
                last: ((0,0), (0,0)), white_can_castle_right: true, black_can_castle_right: true,
-               white_can_castle_left: true, black_can_castle_left: true, board_history: Vec::new(), };
+               white_can_castle_left: true, black_can_castle_left: true, board_history: Vec::new(),
+               seventy_five_move_rule: 0, };
         game.save_board();
 
         game
@@ -498,7 +501,14 @@ impl<'a> Game<'a> {
         let other = self.get_from_pos(to);
         match moving {
             Some(p) => {
+                if let Some(_) = other {
+                    self.seventy_five_move_rule = 0;
+                } else {
+                    self.seventy_five_move_rule += 1;
+                }
+
                 if p.kind == Kind::Pawn && other == None {
+                    self.seventy_five_move_rule = 0;
                     if p.color == Color::White && to.1 == 7 {
                         moving = Some(&WHITE[4]);
                     } else if p.color == Color::Black && to.1 == 0 {
@@ -1299,6 +1309,9 @@ impl<'a> Game<'a> {
     /// assert_eq!(game.check_victory(), Some((Victory::Checkmate, Color::White)));
     /// ```
     pub fn check_victory(&self) -> Option<(Victory, Color)> {
+        if self.seventy_five_move_rule >= 75 {
+            return Some((Victory::Draw, Color::White));
+        }
         if self.board_history.len() >= 5 {
             info!("Checking for five fold repetition");
             let mut matches = 0;
@@ -1487,6 +1500,11 @@ impl<'a> Game<'a> {
         }
 
         false
+    }
+
+    /// Checks whether a player can invoke the fifty-move-rule
+    pub fn fifty_move_rule(&self) -> bool {
+        self.seventy_five_move_rule >= 50
     }
 }
 
