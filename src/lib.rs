@@ -1362,6 +1362,405 @@ impl<'a> Game<'a> {
         None
     }
 
+    /// Turns a move, as returned from `valid_moves`, into [algebraic
+    /// notation](https://en.wikipedia.org/wiki/Algebraic_notation_(chess)) (AN).
+    ///
+    /// If `result` is `true` the function will detect whether a checkmate or a stalemate has
+    /// occured, and add "1-0", "0-1" or "½-½".
+    ///
+    /// # Eksamples
+    ///
+    /// ```
+    /// # use chess::*;
+    /// let mut game = Game::new();
+    ///
+    /// // Turn a string from AN into a move, and back into AN.
+    /// let mut m = game.an_to_move("Nc3", Color::White).unwrap();
+    /// assert_eq!(game.move_to_an(&m, true), "Nc3");
+    ///
+    /// m = game.an_to_move("e5", Color::Black).unwrap();
+    /// assert_eq!(game.move_to_an(&m, true), "e5");
+    /// ```
+    pub fn move_to_an(&self, m: &[((usize, usize), (usize, usize))], result: bool) -> String {
+        let mut s = String::new();
+        let piece = match self.get_from_pos(m[0].0) {
+            Some(p) => p,
+            None => panic!("No piece at position ({}, {}).", (m[0].0).0, (m[0].0).1),
+        };
+        let dest = m.last().unwrap().1;
+        let mut capture: Option<&Piece> = None;
+        for v in m {
+            if let Some(p) = self.get_from_pos(v.1) {
+                if piece.color != p.color {
+                    capture = Some(p);
+                }
+            }
+        }
+
+        if m.len() == 3 {
+            if (m[0].1).0 == 3 {
+                s.push_str("0-0-0");
+            } else if (m[0].1).0 == 5 {
+                s.push_str("0-0");
+            } else {
+                panic!("Invalid castling move.");
+            }
+        } else {
+            match piece.kind {
+                Kind::Pawn => {
+                    if let Some(_) = capture {
+                        s.push(match (m[0].0).0 {
+                            0 => 'a',
+                            1 => 'b',
+                            2 => 'c',
+                            3 => 'd',
+                            4 => 'e',
+                            5 => 'f',
+                            6 => 'g',
+                            7 => 'h',
+                            _ => panic!(),
+                        });
+                    }
+                },
+                Kind::Rook => s.push('R'),
+                Kind::Knight => s.push('N'),
+                Kind::Bishop => s.push('B'),
+                Kind::Queen => s.push('Q'),
+                Kind::King => s.push('K'),
+            }
+
+            let mut row = false;
+            let mut col = false;
+            for i in self.by_kind_and_color(piece.kind, piece.color) {
+                let (pos, _) = i;
+                if pos.0 != (m[0].0).0 && pos.1 != (m[0].0).1 {
+                    for v in self.valid_moves(pos) {
+                        let (tmp_x, tmp_y) = v.last().unwrap().1;
+                        if tmp_x == dest.0 && tmp_y == dest.1 {
+                            if pos.0 == (m[0].0).0 {
+                                row = true;
+                            } else {
+                                col = true;
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            if col {
+                s.push(match (m[0].0).0 {
+                    0 => 'a',
+                    1 => 'b',
+                    2 => 'c',
+                    3 => 'd',
+                    4 => 'e',
+                    5 => 'f',
+                    6 => 'g',
+                    7 => 'h',
+                    _ => panic!(),
+                });
+            }
+            if row {
+                s.push(match (m[0].0).1 {
+                    0 => '1',
+                    1 => '2',
+                    2 => '3',
+                    3 => '4',
+                    4 => '5',
+                    5 => '6',
+                    6 => '7',
+                    7 => '8',
+                    _ => panic!(),
+                });
+            }
+
+            if let Some(_) = capture {
+                s.push('x');
+            }
+
+            s.push(match dest.0 {
+                0 => 'a',
+                1 => 'b',
+                2 => 'c',
+                3 => 'd',
+                4 => 'e',
+                5 => 'f',
+                6 => 'g',
+                7 => 'h',
+                _ => panic!(),
+            });
+
+            s.push(match dest.1 {
+                0 => '1',
+                1 => '2',
+                2 => '3',
+                3 => '4',
+                4 => '5',
+                5 => '6',
+                6 => '7',
+                7 => '8',
+                _ => panic!(),
+            });
+
+            if m.len() == 2 {
+                if let Kind::Pawn = piece.kind {
+                    s.push_str("e.p.");
+                } else {
+                    panic!("Only pawns should be able to have moves that consists of two moves.");
+                }
+            }
+            if piece.kind == Kind::Pawn && (dest.1 == 7 || dest.1 == 0) {
+                s.push_str("=Q");
+            }
+        }
+
+        let other_color = match piece.color {
+            Color::White => Color::Black,
+            Color::Black => Color::White,
+        };
+        let mut g = self.clone();
+
+        g.move_pieces(m);
+        if let Some(v) = g.check_victory() {
+            if result {
+                if let Victory::Checkmate = v.0 {
+                    s.push('#');
+                    match piece.color {
+                        Color::White => s.push_str(" 1-0"),
+                        Color::Black => s.push_str(" 0-1"),
+                    }
+                } else {
+                    s.push_str(" ½-½");
+                }
+            }
+        } else if g.in_check(other_color) {
+            s.push('+');
+        }
+
+        s
+    }
+
+    /// Turns a string in [algebraic
+    /// notation](https://en.wikipedia.org/wiki/Algebraic_notation_(chess)) (AN) into a move that can be passed to `move_pieces`.
+    ///
+    /// This function supports abbreviated algebraic notation, which means that certain characters
+    /// can be removed, as long as it is unambiguous. For example, an 'x' (which signals a capture)
+    /// is completely ignored, and can even be added to moves that doesn't end with a capture. The
+    /// same goes for '=Q' (which signals a pawn promotion) and 'e.p.' (which signals *en passant*).
+    ///
+    /// To get the proper algebraic notation instead of the abbreviated one from a user, pass the
+    /// result of `an_to_move` to `move_to_an`.
+    ///
+    /// This function returns `None` both if the input is malformed and if the move is invalid.
+    /// There is currently no way to distinguish the two.
+    ///
+    /// # Eksamples
+    ///
+    /// ```
+    /// # use chess::*;
+    /// let mut game = Game::new();
+    /// // Start by moving a knight from B1 to C3.
+    /// let mut m = game.an_to_move("Nc3", Color::White);
+    /// assert_eq!(m, Some(vec![((1, 0), (2, 2))]));
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Move a black pawn from D7 to D5.
+    /// m = game.an_to_move("d5", Color::Black);
+    /// assert_eq!(m, Some(vec![((3, 6), (3, 4))]));
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// m = game.an_to_move("e4", Color::White);
+    /// assert_eq!(m, Some(vec![((4, 1), (4, 3))]));
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Now the pawn at D5 can capture the pawn at E4.
+    /// m = game.an_to_move("dxe4", Color::Black);
+    /// assert_eq!(m, Some(vec![((3, 4), (4, 3))]));
+    /// // Abbreviated notation is also valid.
+    /// assert_eq!(m, game.an_to_move("de4", Color::Black));
+    /// assert_eq!(m, game.an_to_move("de", Color::Black));
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Fast-forwards a little.
+    /// m = game.an_to_move("Nf3", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    /// m = game.an_to_move("Ng5", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Now both white knights can reach E4, so "Ne4" isn't enough.
+    /// m = game.an_to_move("Ne4", Color::White);
+    /// assert_eq!(m, None);
+    ///
+    /// // ...so we must specify the file the knight is moving from.
+    /// m = game.an_to_move("Nce4", Color::White);
+    /// assert_eq!(m, Some(vec![((2, 2), (4, 3))]));
+    ///
+    /// // We could also specify the rank, or both the rank and the file.
+    /// assert_eq!(m, game.an_to_move("N3e4", Color::White));
+    /// assert_eq!(m, game.an_to_move("Nc3e4", Color::White));
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Fast forwards some more.
+    /// m = game.an_to_move("Qf3", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    /// m = game.an_to_move("Be2", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    /// m = game.an_to_move("b3", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    /// m = game.an_to_move("Bb2", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Kingside castling.
+    /// m = game.an_to_move("0-0", Color::White);
+    /// assert_eq!(m, Some(vec![((4, 0), (5, 0)), ((5, 0), (6, 0)), ((7, 0), (5, 0))]));
+    ///
+    /// // Queenside castling.
+    /// m = game.an_to_move("0-0-0", Color::White);
+    /// assert_eq!(m, Some(vec![((4, 0), (3, 0)), ((3, 0), (2, 0)), ((0, 0), (3, 0))]));
+    /// ```
+    pub fn an_to_move(&self, s: &str, color: Color) -> Option<Vec<((usize, usize), (usize, usize))>> {
+        let mut len = s.len();
+        let mut result: Option<Vec<((usize, usize), (usize, usize))>> = None;
+        let mut pos_x: Option<usize> = None;
+        let mut pos_y: Option<usize> = None;
+        let target_pos_x: Option<usize>;
+        let mut target_pos_y: Option<usize> = None;
+
+        if len < 2 {
+            return None;
+        }
+
+        if s == "0-0" || s == "0-0-0" {
+            let tmp = self.by_kind_and_color(Kind::King, color);
+            let v = tmp.last().unwrap();
+            for m in self.valid_moves(v.0) {
+                if (s == "0-0" && (m[0].1).0 == 5) ||
+                   (s == "0-0-0" && (m[0].1).0 == 3) {
+                    return Some(m);
+                }
+            }
+            return None;
+        }
+
+        let kind = match s.chars().nth(0).unwrap() {
+            'R' => Kind::Rook,
+            'N' => Kind::Knight,
+            'B' => Kind::Bishop,
+            'Q' => Kind::Queen,
+            'K' => Kind::King,
+            _   => Kind::Pawn,
+        };
+
+        if let Kind::Pawn = kind {
+            if len >= 6 && &s[len-4..len] == "e.p." {
+                len -= 4;
+            } else if len >= 4 && &s[len-2..len] == "=Q" {
+                len -= 2;
+            }
+
+            match string_to_pos(&s[len-2..len]) {
+                Ok(pos) => {
+                    target_pos_x = Some(pos.0);
+                    target_pos_y = Some(pos.1);
+                },
+                Err(_) => {
+                    let mut last = s.chars().nth(len-1).unwrap().to_string();
+                    last.push('1');
+                    match string_to_pos(&last) {
+                        Ok(pos) => {
+                            target_pos_x = Some(pos.0);
+                        },
+                        Err(_) => return None,
+                    }
+                },
+            }
+
+            if len >= 2 {
+                match string_to_pos(&s[0..2]) {
+                    Ok(pos) => {
+                        if len > 2 {
+                            pos_x = Some(pos.0);
+                            pos_y = Some(pos.1);
+                        }
+                    },
+                    Err(_) => {
+                        let mut last = s.chars().nth(0).unwrap().to_string();
+                        last.push('1');
+                        match string_to_pos(&last) {
+                            Ok(pos) => {
+                                pos_x = Some(pos.0);
+                            },
+                            Err(_) => return None,
+                        }
+                    },
+                }
+            }
+        } else {
+            if len < 3 {
+                return None;
+            } else if len > 3 {
+                match string_to_pos(&s[1..3]) {
+                    Ok(pos) => {
+                        pos_x = Some(pos.0);
+                        pos_y = Some(pos.1);
+                    },
+                    Err(_) => {
+                        let mut tile = s.chars().nth(1).unwrap().to_string();
+                        if tile != "x" {
+                            tile.push('1');
+                            match string_to_pos(&tile) {
+                                Ok(pos) => {
+                                    pos_x = Some(pos.0);
+                                },
+                                Err(_) => {
+                                    let mut rank = "E".to_string();
+                                    rank.push(s.chars().nth(1).unwrap());
+                                    match string_to_pos(&rank) {
+                                        Ok(pos) => {
+                                            pos_y = Some(pos.1);
+                                        },
+                                        Err(_) => return None,
+                                    }
+                                },
+                            }
+                        }
+                    },
+                }
+            }
+
+            match string_to_pos(&s[len-2..len]) {
+                Ok(pos) => {
+                    target_pos_x = Some(pos.0);
+                    target_pos_y = Some(pos.1);
+                },
+                Err(_) => return None,
+            }
+        }
+
+        let mut last: (usize, usize);
+        let mut found = false;
+        for p in self.by_kind_and_color(kind, color) {
+            if pos_x.unwrap_or((p.0).0) == (p.0).0 &&
+               pos_y.unwrap_or((p.0).1) == (p.0).1 {
+                for v in self.valid_moves(p.0) {
+                    last = v.last().unwrap().1;
+                    if target_pos_x.unwrap_or(last.0) == last.0 &&
+                       target_pos_y.unwrap_or(last.1) == last.1 {
+                        if found {
+                            return None;
+                        } else {
+                            found = true;
+                            result = Some(v);
+                        }
+                    }
+                }
+            }
+        }
+
+        result
+    }
+
     /// Turns a move tuple into a human readable description.
     ///
     /// # Eksamples
