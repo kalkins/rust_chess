@@ -163,6 +163,7 @@ pub struct Game<'a> {
     white_can_castle_left: bool,
     board_history: Vec<[[Option<&'a Piece>; 8]; 8]>,
     seventy_five_move_rule: u32,
+    last_color: Color,
 }
 
 impl<'a> Game<'a> {
@@ -195,7 +196,7 @@ impl<'a> Game<'a> {
         let mut game = Game { turn: 1, board: board, ignore_kings: false, ignore_check: false,
                last: ((0,0), (0,0)), white_can_castle_right: true, black_can_castle_right: true,
                white_can_castle_left: true, black_can_castle_left: true, board_history: Vec::new(),
-               seventy_five_move_rule: 0, };
+               seventy_five_move_rule: 0, last_color: Color::Black };
         game.save_board();
 
         game
@@ -215,7 +216,7 @@ impl<'a> Game<'a> {
         let mut game = Game { turn: 1, board: [[None; 8]; 8], ignore_kings: false, ignore_check: false,
                last: ((0,0), (0,0)), white_can_castle_right: true, black_can_castle_right: true,
                white_can_castle_left: true, black_can_castle_left: true, board_history: Vec::new(),
-               seventy_five_move_rule: 0, };
+               seventy_five_move_rule: 0, last_color: Color::Black };
         game.save_board();
 
         game
@@ -330,6 +331,9 @@ impl<'a> Game<'a> {
     /// }
     /// ```
     pub fn set_at_pos(&mut self, pos: (usize, usize), piece: Option<&'a Piece>) {
+        if let Some(p) = piece {
+            self.last_color = p.color;
+        }
         self.board[pos.0][pos.1] = piece;
     }
 
@@ -1350,7 +1354,7 @@ impl<'a> Game<'a> {
 
             if self.in_check(color) {
                 return Some((Victory::Checkmate, opposite));
-            } else {
+            } else if self.last_color != color {
                 return Some((Victory::Stalemate, opposite));
             }
         }
