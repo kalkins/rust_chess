@@ -511,7 +511,7 @@ impl<'a> Game<'a> {
                     self.seventy_five_move_rule += 1;
                 }
 
-                if p.kind == Kind::Pawn && other == None {
+                if p.kind == Kind::Pawn {
                     self.seventy_five_move_rule = 0;
                     if p.color == Color::White && to.1 == 7 {
                         moving = Some(&WHITE[4]);

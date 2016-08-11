@@ -26,8 +26,9 @@ fn pawn() {
     assert_eq!(game.get_from_pos((4, 7)), Some(&WHITE[4]));
 
     game.set_at_pos((2, 1), Some(&BLACK[0]));
-    game.move_piece((2, 1), (2, 0));
-    assert_eq!(game.get_from_pos((2, 0)), Some(&BLACK[4]));
+    game.set_at_pos((3, 0), Some(&WHITE[3]));
+    game.move_piece((2, 1), (3, 0));
+    assert_eq!(game.get_from_pos((3, 0)), Some(&BLACK[4]));
 
     // En passant
     game.clear();
