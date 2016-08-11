@@ -1368,6 +1368,9 @@ impl<'a> Game<'a> {
     /// If `result` is `true` the function will detect whether a checkmate or a stalemate has
     /// occured, and add "1-0", "0-1" or "½-½".
     ///
+    /// If `unicode` is `true` the pieces are represented by unicode symbols instead of letters.
+    /// Only black pieces are used, as they are easier to see.
+    ///
     /// # Eksamples
     ///
     /// ```
@@ -1376,12 +1379,13 @@ impl<'a> Game<'a> {
     ///
     /// // Turn a string from AN into a move, and back into AN.
     /// let mut m = game.an_to_move("Nc3", Color::White).unwrap();
-    /// assert_eq!(game.move_to_an(&m, true), "Nc3");
+    /// assert_eq!(game.move_to_an(&m, true, false), "Nc3");
+    /// assert_eq!(game.move_to_an(&m, true, true), "♞c3");
     ///
     /// m = game.an_to_move("e5", Color::Black).unwrap();
-    /// assert_eq!(game.move_to_an(&m, true), "e5");
+    /// assert_eq!(game.move_to_an(&m, true, false), "e5");
     /// ```
-    pub fn move_to_an(&self, m: &[((usize, usize), (usize, usize))], result: bool) -> String {
+    pub fn move_to_an(&self, m: &[((usize, usize), (usize, usize))], result: bool, unicode: bool) -> String {
         let mut s = String::new();
         let piece = match self.get_from_pos(m[0].0) {
             Some(p) => p,
@@ -1406,27 +1410,39 @@ impl<'a> Game<'a> {
                 panic!("Invalid castling move.");
             }
         } else {
-            match piece.kind {
-                Kind::Pawn => {
-                    if let Some(_) = capture {
-                        s.push(match (m[0].0).0 {
-                            0 => 'a',
-                            1 => 'b',
-                            2 => 'c',
-                            3 => 'd',
-                            4 => 'e',
-                            5 => 'f',
-                            6 => 'g',
-                            7 => 'h',
-                            _ => panic!(),
-                        });
-                    }
-                },
-                Kind::Rook => s.push('R'),
-                Kind::Knight => s.push('N'),
-                Kind::Bishop => s.push('B'),
-                Kind::Queen => s.push('Q'),
-                Kind::King => s.push('K'),
+            if piece.kind == Kind::Pawn {
+                if let Some(_) = capture {
+                    s.push(match (m[0].0).0 {
+                        0 => 'a',
+                        1 => 'b',
+                        2 => 'c',
+                        3 => 'd',
+                        4 => 'e',
+                        5 => 'f',
+                        6 => 'g',
+                        7 => 'h',
+                        _ => panic!(),
+                    });
+                }
+            } else if unicode {
+                s.push(
+                    match piece.kind {
+                        Kind::Rook => '\u{265c}',
+                        Kind::Knight => '\u{265e}',
+                        Kind::Bishop => '\u{265d}',
+                        Kind::Queen => '\u{265b}',
+                        Kind::King => '\u{265a}',
+                        _ => panic!(),
+                    });
+            } else {
+                match piece.kind {
+                    Kind::Rook => s.push('R'),
+                    Kind::Knight => s.push('N'),
+                    Kind::Bishop => s.push('B'),
+                    Kind::Queen => s.push('Q'),
+                    Kind::King => s.push('K'),
+                    _ => panic!(),
+                }
             }
 
             let mut row = false;
@@ -1549,6 +1565,8 @@ impl<'a> Game<'a> {
     /// is completely ignored, and can even be added to moves that doesn't end with a capture. The
     /// same goes for '=Q' (which signals a pawn promotion) and 'e.p.' (which signals *en passant*).
     ///
+    /// The pieces can be represented by both letters and unicode symbols.
+    ///
     /// To get the proper algebraic notation instead of the abbreviated one from a user, pass the
     /// result of `an_to_move` to `move_to_an`.
     ///
@@ -1644,11 +1662,11 @@ impl<'a> Game<'a> {
         }
 
         let kind = match s.chars().nth(0).unwrap() {
-            'R' => Kind::Rook,
-            'N' => Kind::Knight,
-            'B' => Kind::Bishop,
-            'Q' => Kind::Queen,
-            'K' => Kind::King,
+            'R' | '\u{2656}' | '\u{265c}' => Kind::Rook,
+            'N' | '\u{2658}' | '\u{265e}' => Kind::Knight,
+            'B' | '\u{2657}' | '\u{265d}' => Kind::Bishop,
+            'Q' | '\u{2655}' | '\u{265b}' => Kind::Queen,
+            'K' | '\u{2654}' | '\u{265a}' => Kind::King,
             _   => Kind::Pawn,
         };
 
@@ -1826,45 +1844,94 @@ impl<'a> Game<'a> {
 
     /// Returns the game board as a string.
     ///
+    /// Set `unicode` to true if you want the pieces represented by their [unicode symbols]
+    /// (https://en.wikipedia.org/wiki/Chess_symbols_in_Unicode) instead of letters.
+    /// If `unicode` is false the same letters that are used in [algebraic
+    /// notation](https://en.wikipedia.org/wiki/Algebraic_notation_(chess)) is
+    /// used, with the addition of 'P' for pawns. The white pieces are represented by uppercase
+    /// letters, while black are lowercase.
+    ///
     /// # Eksamples
     ///
     /// ```
     /// # use chess::*;
     /// let game = Game::new();
-    /// println!("{}", game.board_to_string());
+    /// let mut board = game.board_to_string(false);
+    /// assert_eq!(board,
+    ///            "rnbqkbnr\
+    ///           \npppppppp\
+    ///           \n        \
+    ///           \n        \
+    ///           \n        \
+    ///           \n        \
+    ///           \nPPPPPPPP\
+    ///           \nRNBQKBNR");
+    ///
+    /// board = game.board_to_string(true);
+    /// assert_eq!(board,
+    ///            "♜♞♝♛♚♝♞♜\
+    ///           \n♟♟♟♟♟♟♟♟\
+    ///           \n        \
+    ///           \n        \
+    ///           \n        \
+    ///           \n        \
+    ///           \n♙♙♙♙♙♙♙♙\
+    ///           \n♖♘♗♕♔♗♘♖");
     /// ```
-    pub fn board_to_string(&self) -> String {
+    pub fn board_to_string(&self, unicode: bool) -> String {
         let mut s = String::new();
         let mut y: usize;
 
         for y1 in 0..8 {
             y = 7 - y1;
             for x in 0..8 {
-                s.push_str( if let Some(p) = self.get_from_pos((x, y)) {
+                s.push( if let Some(p) = self.get_from_pos((x, y)) {
                     match p.color {
                         Color::White => {
-                            match p.kind {
-                                Kind::Pawn => "P",
-                                Kind::Rook => "R",
-                                Kind::Knight => "N",
-                                Kind::Bishop => "B",
-                                Kind::Queen => "Q",
-                                Kind::King => "K",
+                            if unicode {
+                                match p.kind {
+                                    Kind::Pawn => '\u{2659}',
+                                    Kind::Rook => '\u{2656}',
+                                    Kind::Knight => '\u{2658}',
+                                    Kind::Bishop => '\u{2657}',
+                                    Kind::Queen => '\u{2655}',
+                                    Kind::King => '\u{2654}',
+                                }
+                            } else {
+                                match p.kind {
+                                    Kind::Pawn => 'P',
+                                    Kind::Rook => 'R',
+                                    Kind::Knight => 'N',
+                                    Kind::Bishop => 'B',
+                                    Kind::Queen => 'Q',
+                                    Kind::King => 'K',
+                                }
                             }
                         },
                         Color::Black => {
-                            match p.kind {
-                                Kind::Pawn => "p",
-                                Kind::Rook => "r",
-                                Kind::Knight => "n",
-                                Kind::Bishop => "b",
-                                Kind::Queen => "q",
-                                Kind::King => "k",
+                            if unicode {
+                                match p.kind {
+                                    Kind::Pawn => '\u{265f}',
+                                    Kind::Rook => '\u{265c}',
+                                    Kind::Knight => '\u{265e}',
+                                    Kind::Bishop => '\u{265d}',
+                                    Kind::Queen => '\u{265b}',
+                                    Kind::King => '\u{265a}',
+                                }
+                            } else {
+                                match p.kind {
+                                    Kind::Pawn => 'p',
+                                    Kind::Rook => 'r',
+                                    Kind::Knight => 'n',
+                                    Kind::Bishop => 'b',
+                                    Kind::Queen => 'q',
+                                    Kind::King => 'k',
+                                }
                             }
                         },
                     }
                 } else {
-                    " "
+                    ' '
                 });
             }
 
@@ -2046,7 +2113,7 @@ mod tests {
     #[test]
     fn test_print() {
         let game = Game::new();
-        let board = game.board_to_string();
+        let mut board = game.board_to_string(false);
         assert_eq!(board,
                    "rnbqkbnr\
                   \npppppppp\
@@ -2056,5 +2123,16 @@ mod tests {
                   \n        \
                   \nPPPPPPPP\
                   \nRNBQKBNR");
+
+        board = game.board_to_string(true);
+        assert_eq!(board,
+                   "♜♞♝♛♚♝♞♜\
+                  \n♟♟♟♟♟♟♟♟\
+                  \n        \
+                  \n        \
+                  \n        \
+                  \n        \
+                  \n♙♙♙♙♙♙♙♙\
+                  \n♖♘♗♕♔♗♘♖");
     }
 }
