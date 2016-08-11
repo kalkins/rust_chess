@@ -51,7 +51,7 @@ pub static BLACK: [Piece; 6] = [
 ];
 
 /// The different kinds of chess pieces.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Kind {
     King,
     Queen,
