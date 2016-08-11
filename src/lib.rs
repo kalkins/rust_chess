@@ -865,7 +865,9 @@ impl<'a> Game<'a> {
                     },
                     Kind::Rook => {
                         let mut x: usize = pos.0;
-                        while x < 7 && x > 0 {
+                        let mut y: usize = pos.1;
+                        // Vertically/horisontally
+                        while x < 7 {
                             x += 1;
                             moves.push((x, pos.1));
                             if let Some(_) = self.get_from_pos((x, pos.1)) {
@@ -873,7 +875,7 @@ impl<'a> Game<'a> {
                             }
                         }
                         x = pos.0;
-                        while x < 7 && x > 0 {
+                        while x > 0 {
                             x -= 1;
                             moves.push((x, pos.1));
                             if let Some(_) = self.get_from_pos((x, pos.1)) {
@@ -881,8 +883,7 @@ impl<'a> Game<'a> {
                             }
                         }
 
-                        let mut y: usize = pos.1;
-                        while y < 7 && y > 0 {
+                        while y < 7 {
                             y += 1;
                             moves.push((pos.0, y));
                             if let Some(_) = self.get_from_pos((pos.0, y)) {
@@ -890,7 +891,7 @@ impl<'a> Game<'a> {
                             }
                         }
                         y = pos.1;
-                        while y < 7 && y > 0 {
+                        while y > 0 {
                             y -= 1;
                             moves.push((pos.0, y));
                             if let Some(_) = self.get_from_pos((pos.0, y)) {
@@ -901,7 +902,8 @@ impl<'a> Game<'a> {
                     Kind::Bishop => {
                         let mut x: usize = pos.0;
                         let mut y: usize = pos.1;
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        // Diagonally
+                        while x < 7 && y < 7 {
                             x += 1;
                             y += 1;
                             moves.push((x, y));
@@ -912,7 +914,7 @@ impl<'a> Game<'a> {
 
                         x = pos.0;
                         y = pos.1;
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        while x < 7 && y > 0 {
                             x += 1;
                             y -= 1;
                             moves.push((x, y));
@@ -923,7 +925,7 @@ impl<'a> Game<'a> {
 
                         x = pos.0;
                         y = pos.1;
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        while x > 0 && y < 7 {
                             x -= 1;
                             y += 1;
                             moves.push((x, y));
@@ -934,7 +936,7 @@ impl<'a> Game<'a> {
 
                         x = pos.0;
                         y = pos.1;
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        while x > 0 && y > 0 {
                             x -= 1;
                             y -= 1;
                             moves.push((x, y));
