@@ -51,7 +51,7 @@ pub static BLACK: [Piece; 6] = [
 ];
 
 /// The different kinds of chess pieces.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Kind {
     King,
     Queen,
@@ -59,6 +59,19 @@ pub enum Kind {
     Bishop,
     Rook,
     Pawn,
+}
+
+impl std::fmt::Display for Kind {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            Kind::King => write!(f, "king"),
+            Kind::Queen => write!(f, "queen"),
+            Kind::Knight => write!(f, "knight"),
+            Kind::Bishop => write!(f, "bishop"),
+            Kind::Rook => write!(f, "rook"),
+            Kind::Pawn => write!(f, "pawn"),
+        }
+    }
 }
 
 /// The different colors of chess pieces.
@@ -70,10 +83,9 @@ pub enum Color {
 
 impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        if *self == Color::White {
-            write!(f, "Color::White")
-        } else {
-            write!(f, "Color::Black")
+        match *self {
+            Color::White => write!(f, "white"),
+            Color::Black => write!(f, "black"),
         }
     }
 }
@@ -82,7 +94,18 @@ impl std::fmt::Display for Color {
 #[derive(PartialEq, Debug, Clone)]
 pub enum Victory {
     Checkmate,
-    Remi,
+    Stalemate,
+    Draw,
+}
+
+impl std::fmt::Display for Victory {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            Victory::Checkmate => write!(f, "checkmate"),
+            Victory::Stalemate => write!(f, "stalemate"),
+            Victory::Draw => write!(f, "draw"),
+        }
+    }
 }
 
 /// The chess piece struct.
@@ -94,6 +117,12 @@ pub struct Piece {
     pub kind: Kind,
 }
 
+impl std::fmt::Display for Piece {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{} {}", self.color, self.kind)
+    }
+}
+
 /// The game struct.
 ///
 /// The coordinates used to access pieces are 0-indexed tuples of (usize, usize),
@@ -101,7 +130,7 @@ pub struct Piece {
 /// and (7,7) corresponds to H8 in the top right corner, seen from the white side.
 ///
 /// The pieces are stored as Option<&Piece>, and are references to the pieces in the WHITE and
-/// BLACK array. 
+/// BLACK array.
 ///
 /// # Eksamples
 ///
@@ -109,7 +138,7 @@ pub struct Piece {
 /// # use chess::*;
 /// // Create a new game, with all pieces in their initial position.
 /// let mut game = Game::new();
-/// 
+///
 /// // The piece at C1 is supposed to be a bishop.
 /// let bishop = game.get_from_pos((2,0));
 /// if let Some(piece) = bishop {
@@ -127,6 +156,14 @@ pub struct Game<'a> {
     board: [[Option<&'a Piece>; 8]; 8],
     ignore_kings: bool,
     ignore_check: bool,
+    last: ((usize, usize), (usize, usize)),
+    black_can_castle_right: bool,
+    black_can_castle_left: bool,
+    white_can_castle_right: bool,
+    white_can_castle_left: bool,
+    board_history: Vec<[[Option<&'a Piece>; 8]; 8]>,
+    seventy_five_move_rule: u32,
+    last_color: Color,
 }
 
 impl<'a> Game<'a> {
@@ -151,12 +188,18 @@ impl<'a> Game<'a> {
             board[i][7] = Some(&BLACK[1+i]);
             board[7-i][7] = Some(&BLACK[1+i]);
         }
-        board[3][0] = Some(&WHITE[5]);
-        board[4][0] = Some(&WHITE[4]);
-        board[3][7] = Some(&BLACK[5]);
-        board[4][7] = Some(&BLACK[4]);
+        board[4][0] = Some(&WHITE[5]);
+        board[3][0] = Some(&WHITE[4]);
+        board[4][7] = Some(&BLACK[5]);
+        board[3][7] = Some(&BLACK[4]);
 
-        Game { turn: 1, board: board, ignore_kings: false, ignore_check: false}
+        let mut game = Game { turn: 1, board: board, ignore_kings: false, ignore_check: false,
+               last: ((0,0), (0,0)), white_can_castle_right: true, black_can_castle_right: true,
+               white_can_castle_left: true, black_can_castle_left: true, board_history: Vec::new(),
+               seventy_five_move_rule: 0, last_color: Color::Black };
+        game.save_board();
+
+        game
     }
 
     /// Creates a new game with an empty board.
@@ -170,7 +213,13 @@ impl<'a> Game<'a> {
     /// assert_eq!(game.by_color(Color::Black).len(), 0);
     /// ```
     pub fn new_empty() -> Game<'a> {
-        Game { turn: 1, board: [[None; 8]; 8], ignore_kings: false, ignore_check: false }
+        let mut game = Game { turn: 1, board: [[None; 8]; 8], ignore_kings: false, ignore_check: false,
+               last: ((0,0), (0,0)), white_can_castle_right: true, black_can_castle_right: true,
+               white_can_castle_left: true, black_can_castle_left: true, board_history: Vec::new(),
+               seventy_five_move_rule: 0, last_color: Color::Black };
+        game.save_board();
+
+        game
     }
 
     /// Clears the board.
@@ -187,6 +236,7 @@ impl<'a> Game<'a> {
     /// ```
     pub fn clear(&mut self) {
         self.board = [[None; 8]; 8];
+        self.last = ((0,0), (0,0));
     }
 
     /// Tells the game whether to ignore a lack of kings.
@@ -200,7 +250,7 @@ impl<'a> Game<'a> {
     /// # use chess::*;
     /// let mut game = Game::new_empty();
     /// game.set_at_pos((3, 3), Some(&WHITE[3]));
-    /// 
+    ///
     /// // This would cause a panic
     /// // game.valid_moves((3, 3));
     ///
@@ -281,6 +331,9 @@ impl<'a> Game<'a> {
     /// }
     /// ```
     pub fn set_at_pos(&mut self, pos: (usize, usize), piece: Option<&'a Piece>) {
+        if let Some(p) = piece {
+            self.last_color = p.color;
+        }
         self.board[pos.0][pos.1] = piece;
     }
 
@@ -448,12 +501,56 @@ impl<'a> Game<'a> {
         if from.0 > 7 || from.1 > 7 || to.0 > 7 || to.1 > 7 {
             return None;
         }
-        let moving = self.get_from_pos(from);
+        let mut moving = self.get_from_pos(from);
         let other = self.get_from_pos(to);
         match moving {
-            Some(_) => {
+            Some(p) => {
+                if let Some(_) = other {
+                    self.seventy_five_move_rule = 0;
+                } else {
+                    self.seventy_five_move_rule += 1;
+                }
+
+                if p.kind == Kind::Pawn {
+                    self.seventy_five_move_rule = 0;
+                    if p.color == Color::White && to.1 == 7 {
+                        moving = Some(&WHITE[4]);
+                    } else if p.color == Color::Black && to.1 == 0 {
+                        moving = Some(&BLACK[4]);
+                    }
+                } else if p.kind == Kind::King {
+                    match p.color {
+                        Color::White => {
+                            self.white_can_castle_left = false;
+                            self.white_can_castle_right = false;
+                        },
+                        Color::Black => {
+                            self.black_can_castle_left = false;
+                            self.black_can_castle_right = false;
+                        },
+                    }
+                } else if p.kind == Kind::Rook {
+                    match p.color {
+                        Color::White => {
+                            if from.0 == 0 {
+                                self.white_can_castle_left = false;
+                            } else if from.0 == 7 {
+                                self.white_can_castle_right = false;
+                            }
+                        },
+                        Color::Black => {
+                            if from.0 == 0 {
+                                self.black_can_castle_left = false;
+                            } else if from.0 == 7 {
+                                self.black_can_castle_right = false;
+                            }
+                        },
+                    }
+                }
+
                 self.set_at_pos(to, moving);
                 self.set_at_pos(from, None);
+                self.last = (from, to);
                 other
             },
             None    => None,
@@ -522,7 +619,9 @@ impl<'a> Game<'a> {
             tmp = self.move_piece(from, to);
             if let Some(_) = tmp {
                 captured = tmp;
+                self.board_history.clear();
             }
+            self.save_board();
         }
 
         captured
@@ -597,82 +696,172 @@ impl<'a> Game<'a> {
 
     fn check_valid_moves(&self, pos: (usize, usize), test_check: bool) -> Vec<Vec<((usize, usize), (usize, usize))>> {
         info!("check_valid_moves called with args: pos: ({}, {}), test_check: {}", pos.0, pos.1, test_check);
-        let mut result: Vec<Vec<((usize, usize), (usize, usize))>> = Vec::new();
-        for v in self.raw_moves(pos) {
-            result.push(vec![(pos, v)]);
-        }
+        let mut result: Vec<Vec<((usize, usize), (usize, usize))>> = self.raw_moves(pos);
 
         let mut index: Vec<usize> = Vec::new();
         let mut from: (usize, usize);
         let mut to: (usize, usize);
-        for i in 0..result.len() {
+        let mut game: Game;
+        'outer: for i in 0..result.len() {
+            game = self.clone();
             for j in 0..result[i].len() {
                 from = result[i][j].0;
                 to = result[i][j].1;
                 if from.0 > 7 || from.1 > 7 || to.0 > 7 || to.1 > 7 {
                     info!("from: ({}, {}) to: ({}, {}) excluded, being out of bounds", from.0, from.1, to.0, to.1);
                     index.insert(0, i);
-                } else if let Some(piece) = self.get_from_pos(from) {
-                    if let Some(other) = self.get_from_pos(to) {
+                    continue 'outer;
+                } else if let Some(piece) = game.get_from_pos(from) {
+                    if let Some(other) = game.get_from_pos(to) {
                         if other.color == piece.color {
                             info!("from: ({}, {}) to: ({}, {}) excluded because it was targeting a friendly", from.0, from.1, to.0, to.1);
                             index.insert(0, i);
+                            continue 'outer;
                         }
-                    } else if test_check && self.check_for_check(from, to) {
-                        info!("from: ({}, {}) to: ({}, {}) excluded because it would put it in check", from.0, from.1, to.0, to.1);
-                        index.insert(0, i);
                     }
+                    if test_check && game.check_for_check(from, to) {
+                        info!("from: ({}, {}) to: ({}, {}) at index {} excluded because it would put it in check", from.0, from.1, to.0, to.1, i);
+                        index.insert(0, i);
+                        continue 'outer;
+                    }
+                } else {
+                    panic!("No piece at ({}, {})", from.0, from.1);
                 }
+                game.move_piece(from, to);
             }
         }
         for v in index {
             result.remove(v);
         }
 
+        info!("check_valid_moves finished");
         result
     }
 
-    fn raw_moves(&self, pos: (usize, usize)) -> Vec<(usize, usize)> {
+    fn raw_moves(&self, pos: (usize, usize)) -> Vec<Vec<((usize, usize), (usize, usize))>> {
+        let mut result: Vec<Vec<((usize, usize), (usize, usize))>> = Vec::new();
         let mut moves: Vec<(usize, usize)> = Vec::new();
+
         match self.get_from_pos(pos) {
             None        => {},
             Some(piece) => {
+                let mut passant: bool;
                 match piece.kind {
                     Kind::Pawn => {
                         match piece.color {
                             Color::White => {
                                 if pos.1 == 1 {
-                                    moves.push((pos.0, pos.1 + 2));
-                                }
-
-                                moves.push((pos.0, pos.1 + 1));
-
-                                if pos.0 > 0 {
-                                    if let Some(_) = self.get_from_pos((pos.0 - 1, pos.1 + 1)) {
-                                        moves.push((pos.0 - 1, pos.1 + 1));
+                                    if let None = self.get_from_pos((pos.0, pos.1 + 1)) {
+                                        if let None = self.get_from_pos((pos.0, pos.1 + 2)) {
+                                            moves.push((pos.0, pos.1 + 2));
+                                        }
                                     }
                                 }
-                                if pos.0 < 7 {
+
+                                if pos.1 < 7 {
+                                    if let None = self.get_from_pos((pos.0, pos.1 + 1)) {
+                                        moves.push((pos.0, pos.1 + 1));
+                                    }
+                                }
+
+                                if pos.0 > 0 && pos.1 < 7{
+                                    passant = false;
+                                    if let Some(other) = self.get_from_pos((pos.0 - 1, pos.1)) {
+                                        if other.color != piece.color &&
+                                            pos.1 == 4 &&
+                                            (self.last.0).0 == pos.0 - 1 &&
+                                            (self.last.0).1 == pos.1 + 2 &&
+                                            (self.last.1).0 == pos.0 - 1 &&
+                                            (self.last.1).1 == pos.1 {
+                                            passant = true;
+                                            result.push(vec![
+                                                        ((pos.0, pos.1), (pos.0-1, pos.1)),
+                                                        ((pos.0-1, pos.1), (pos.0-1, pos.1+1))]);
+                                        }
+                                    }
+                                    if let Some(_) = self.get_from_pos((pos.0 - 1, pos.1 + 1)) {
+                                        if !passant {
+                                            moves.push((pos.0 - 1, pos.1 + 1));
+                                        }
+                                    }
+                                }
+                                if pos.0 < 7 && pos.1 < 7{
+                                    passant = false;
+                                    if let Some(other) = self.get_from_pos((pos.0 + 1, pos.1)) {
+                                        if other.color != piece.color &&
+                                            pos.1 == 4 &&
+                                            (self.last.0).0 == pos.0 + 1 &&
+                                            (self.last.0).1 == pos.1 + 2 &&
+                                            (self.last.1).0 == pos.0 + 1 &&
+                                            (self.last.1).1 == pos.1 {
+                                            passant = true;
+                                            result.push(vec![
+                                                        ((pos.0, pos.1), (pos.0+1, pos.1)),
+                                                        ((pos.0+1, pos.1), (pos.0+1, pos.1+1))]);
+                                        }
+                                    }
                                     if let Some(_) = self.get_from_pos((pos.0 + 1, pos.1 + 1)) {
-                                        moves.push((pos.0 + 1, pos.1 + 1));
+                                        if !passant {
+                                            moves.push((pos.0 + 1, pos.1 + 1));
+                                        }
                                     }
                                 }
                             },
                             Color::Black => {
                                 if pos.1 == 6 {
-                                    moves.push((pos.0, pos.1 - 2));
-                                }
-
-                                moves.push((pos.0, pos.1 - 1));
-
-                                if pos.0 > 0 {
-                                    if let Some(_) = self.get_from_pos((pos.0 - 1, pos.1 - 1)) {
-                                        moves.push((pos.0 - 1, pos.1 - 1));
+                                    if let None = self.get_from_pos((pos.0, pos.1 - 1)) {
+                                        if let None = self.get_from_pos((pos.0, pos.1 - 2)) {
+                                            moves.push((pos.0, pos.1 - 2));
+                                        }
                                     }
                                 }
-                                if pos.0 < 7 {
+
+                                if pos.1 > 0 {
+                                    if let None = self.get_from_pos((pos.0, pos.1 - 1)) {
+                                        moves.push((pos.0, pos.1 - 1));
+                                    }
+                                }
+
+                                if pos.0 > 0 && pos.1 > 0 {
+                                    passant = false;
+                                    if let Some(other) = self.get_from_pos((pos.0 - 1, pos.1)) {
+                                        if other.color != piece.color &&
+                                            pos.1 == 3 &&
+                                            (self.last.0).0 == pos.0 - 1 &&
+                                            (self.last.0).1 == pos.1 - 2 &&
+                                            (self.last.1).0 == pos.0 - 1 &&
+                                            (self.last.1).1 == pos.1 {
+                                            passant = true;
+                                            result.push(vec![
+                                                        ((pos.0, pos.1), (pos.0-1, pos.1)),
+                                                        ((pos.0-1, pos.1), (pos.0-1, pos.1-1))]);
+                                        }
+                                    }
+                                    if let Some(_) = self.get_from_pos((pos.0 - 1, pos.1 - 1)) {
+                                        if !passant {
+                                            moves.push((pos.0 - 1, pos.1 - 1));
+                                        }
+                                    }
+                                }
+                                if pos.0 < 7 && pos.1 > 0 {
+                                    passant = false;
+                                    if let Some(other) = self.get_from_pos((pos.0 + 1, pos.1)) {
+                                        if other.color != piece.color &&
+                                            pos.1 == 3 &&
+                                            (self.last.0).0 == pos.0 + 1 &&
+                                            (self.last.0).1 == pos.1 - 2 &&
+                                            (self.last.1).0 == pos.0 + 1 &&
+                                            (self.last.1).1 == pos.1 {
+                                            passant = true;
+                                            result.push(vec![
+                                                        ((pos.0, pos.1), (pos.0+1, pos.1)),
+                                                        ((pos.0+1, pos.1), (pos.0+1, pos.1-1))]);
+                                        }
+                                    }
                                     if let Some(_) = self.get_from_pos((pos.0 + 1, pos.1 - 1)) {
-                                        moves.push((pos.0 + 1, pos.1 - 1));
+                                        if !passant {
+                                            moves.push((pos.0 + 1, pos.1 - 1));
+                                        }
                                     }
                                 }
                             },
@@ -680,7 +869,9 @@ impl<'a> Game<'a> {
                     },
                     Kind::Rook => {
                         let mut x: usize = pos.0;
-                        while x < 7 && x > 0 {
+                        let mut y: usize = pos.1;
+                        // Vertically/horisontally
+                        while x < 7 {
                             x += 1;
                             moves.push((x, pos.1));
                             if let Some(_) = self.get_from_pos((x, pos.1)) {
@@ -688,7 +879,7 @@ impl<'a> Game<'a> {
                             }
                         }
                         x = pos.0;
-                        while x < 7 && x > 0 {
+                        while x > 0 {
                             x -= 1;
                             moves.push((x, pos.1));
                             if let Some(_) = self.get_from_pos((x, pos.1)) {
@@ -696,8 +887,7 @@ impl<'a> Game<'a> {
                             }
                         }
 
-                        let mut y: usize = pos.1;
-                        while y < 7 && y > 0 {
+                        while y < 7 {
                             y += 1;
                             moves.push((pos.0, y));
                             if let Some(_) = self.get_from_pos((pos.0, y)) {
@@ -705,7 +895,7 @@ impl<'a> Game<'a> {
                             }
                         }
                         y = pos.1;
-                        while y < 7 && y > 0 {
+                        while y > 0 {
                             y -= 1;
                             moves.push((pos.0, y));
                             if let Some(_) = self.get_from_pos((pos.0, y)) {
@@ -716,7 +906,8 @@ impl<'a> Game<'a> {
                     Kind::Bishop => {
                         let mut x: usize = pos.0;
                         let mut y: usize = pos.1;
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        // Diagonally
+                        while x < 7 && y < 7 {
                             x += 1;
                             y += 1;
                             moves.push((x, y));
@@ -727,7 +918,7 @@ impl<'a> Game<'a> {
 
                         x = pos.0;
                         y = pos.1;
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        while x < 7 && y > 0 {
                             x += 1;
                             y -= 1;
                             moves.push((x, y));
@@ -738,7 +929,7 @@ impl<'a> Game<'a> {
 
                         x = pos.0;
                         y = pos.1;
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        while x > 0 && y < 7 {
                             x -= 1;
                             y += 1;
                             moves.push((x, y));
@@ -749,7 +940,7 @@ impl<'a> Game<'a> {
 
                         x = pos.0;
                         y = pos.1;
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        while x > 0 && y > 0 {
                             x -= 1;
                             y -= 1;
                             moves.push((x, y));
@@ -762,7 +953,7 @@ impl<'a> Game<'a> {
                         let mut x: usize = pos.0;
                         let mut y: usize = pos.1;
                         // Diagonally
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        while x < 7 && y < 7 {
                             x += 1;
                             y += 1;
                             moves.push((x, y));
@@ -773,7 +964,7 @@ impl<'a> Game<'a> {
 
                         x = pos.0;
                         y = pos.1;
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        while x < 7 && y > 0 {
                             x += 1;
                             y -= 1;
                             moves.push((x, y));
@@ -784,7 +975,7 @@ impl<'a> Game<'a> {
 
                         x = pos.0;
                         y = pos.1;
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        while x > 0 && y < 7 {
                             x -= 1;
                             y += 1;
                             moves.push((x, y));
@@ -795,7 +986,7 @@ impl<'a> Game<'a> {
 
                         x = pos.0;
                         y = pos.1;
-                        while x < 7 && x > 0  && y < 7 && y > 0 {
+                        while x > 0 && y > 0 {
                             x -= 1;
                             y -= 1;
                             moves.push((x, y));
@@ -806,7 +997,7 @@ impl<'a> Game<'a> {
 
                         // Vertically/horisontally
                         x = pos.0;
-                        while x < 7 && x > 0 {
+                        while x < 7 {
                             x += 1;
                             moves.push((x, pos.1));
                             if let Some(_) = self.get_from_pos((x, pos.1)) {
@@ -814,7 +1005,7 @@ impl<'a> Game<'a> {
                             }
                         }
                         x = pos.0;
-                        while x < 7 && x > 0 {
+                        while x > 0 {
                             x -= 1;
                             moves.push((x, pos.1));
                             if let Some(_) = self.get_from_pos((x, pos.1)) {
@@ -823,7 +1014,7 @@ impl<'a> Game<'a> {
                         }
 
                         y = pos.1;
-                        while y < 7 && y > 0 {
+                        while y < 7 {
                             y += 1;
                             moves.push((pos.0, y));
                             if let Some(_) = self.get_from_pos((pos.0, y)) {
@@ -831,7 +1022,7 @@ impl<'a> Game<'a> {
                             }
                         }
                         y = pos.1;
-                        while y < 7 && y > 0 {
+                        while y > 0 {
                             y -= 1;
                             moves.push((pos.0, y));
                             if let Some(_) = self.get_from_pos((pos.0, y)) {
@@ -899,19 +1090,146 @@ impl<'a> Game<'a> {
                         if pos.1 < 7 {
                             moves.push((pos.0, pos.1 + 1));
                         }
+
+                        let mut left: Vec<((usize, usize), (usize, usize))> = Vec::new();
+                        let mut right: Vec<((usize, usize), (usize, usize))> = Vec::new();
+                        let mut game: Game;
+                        let mut p: (usize, usize);
+                        match piece.color {
+                            Color::White => {
+                                if pos.0 == 4 && pos.1 == 0 {
+                                    if self.white_can_castle_left {
+                                        game = self.clone();
+                                        for i in 1..4 {
+                                            if i == 3 {
+                                                if let None = game.get_from_pos((1, pos.1)) {
+                                                    if let Some(rook) = game.get_from_pos((0, pos.1)) {
+                                                        if rook.color == piece.color && rook.kind == Kind::Rook {
+                                                            left.push( ((0, pos.1), (3, pos.1)) );
+                                                            result.push(left);
+                                                        }
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            p = (pos.0 - i, pos.1);
+
+                                            if let Some(_) = game.move_piece(pos, p) {
+                                                break;
+                                            }
+
+                                            if game.in_check(piece.color) {
+                                                break;
+                                            }
+
+                                            left.push( ((p.0 + 1, p.1), p) );
+                                        }
+                                    }
+                                    if self.white_can_castle_right {
+                                        game = self.clone();
+                                        for i in 1..4 {
+                                            if i == 3 {
+                                                if let None = game.get_from_pos((6, pos.1)) {
+                                                    if let Some(rook) = game.get_from_pos((7, pos.1)) {
+                                                        if rook.color == piece.color && rook.kind == Kind::Rook {
+                                                            right.push( ((7, pos.1), (5, pos.1)) );
+                                                            result.push(right);
+                                                        }
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            p = (pos.0 + i, pos.1);
+
+                                            if let Some(_) = game.move_piece(pos, p) {
+                                                break;
+                                            }
+
+                                            if game.in_check(piece.color) {
+                                                break;
+                                            }
+
+                                            right.push( ((p.0 - 1, p.1), p) );
+                                        }
+                                    }
+                                }
+                            },
+                            Color::Black => {
+                                if pos.0 == 4 && pos.1 == 7 {
+                                    if self.black_can_castle_left {
+                                        game = self.clone();
+                                        for i in 1..4 {
+                                            if i == 3 {
+                                                if let None = game.get_from_pos((1, pos.1)) {
+                                                    if let Some(rook) = game.get_from_pos((0, pos.1)) {
+                                                        if rook.color == piece.color && rook.kind == Kind::Rook {
+                                                            left.push( ((0, pos.1), (3, pos.1)) );
+                                                            result.push(left);
+                                                        }
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            p = (pos.0 - i, pos.1);
+
+                                            if let Some(_) = game.move_piece(pos, p) {
+                                                break;
+                                            }
+
+                                            if game.in_check(piece.color) {
+                                                break;
+                                            }
+
+                                            left.push( ((p.0 + 1, p.1), p) );
+                                        }
+                                    }
+                                    if self.black_can_castle_right {
+                                        game = self.clone();
+                                        for i in 1..4 {
+                                            if i == 3 {
+                                                if let None = game.get_from_pos((6, pos.1)) {
+                                                    if let Some(rook) = game.get_from_pos((7, pos.1)) {
+                                                        if rook.color == piece.color && rook.kind == Kind::Rook {
+                                                            right.push( ((7, pos.1), (5, pos.1)) );
+                                                            result.push(right);
+                                                        }
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            p = (pos.0 + i, pos.1);
+
+                                            if let Some(_) = game.move_piece(pos, p) {
+                                                break;
+                                            }
+
+                                            if game.in_check(piece.color) {
+                                                break;
+                                            }
+
+                                            right.push( ((p.0 - 1, p.1), p) );
+                                        }
+                                    }
+                                }
+                            },
+                        }
                     },
                 }
             },
         }
-        
-        moves
+
+        for v in moves {
+            result.push(vec![(pos, v)]);
+        }
+
+        result
     }
 
 
     /// Sees whether the king of the given color is currently in check or not.
     ///
     /// # Eksamples
-    /// 
+    ///
     /// ```
     /// # use chess::*;
     /// // Clear the board, then put a black king at C5, and a white pawn at D4.
@@ -967,7 +1285,7 @@ impl<'a> Game<'a> {
     }
 
     /// Checks whether the game is won, and returns the victory type and the color of the victor,
-    /// or None if the game isn't won yet.
+    /// or None if the game isn't won yet. In case of a draw a random color is returned.
     ///
     /// # Eksamples
     ///
@@ -987,16 +1305,42 @@ impl<'a> Game<'a> {
     /// game.set_at_pos((1, 2), Some(&WHITE[4]));
     /// game.set_at_pos((1, 1), None);
     ///
-    /// // Now the king isn't in check, but the king can't move so it's a remi victory.
-    /// assert_eq!(game.check_victory(), Some((Victory::Remi, Color::White)));
+    /// // Now the king isn't in check, but the king can't move so it's a stalemate draw.
+    /// assert_eq!(game.check_victory(), Some((Victory::Stalemate, Color::White)));
     ///
     /// // Add another queen at C3
     /// game.set_at_pos((2, 2), Some(&WHITE[4]));
-    /// 
+    ///
     /// // Now the king is in check, and can't move, so white has won by checkmate.
     /// assert_eq!(game.check_victory(), Some((Victory::Checkmate, Color::White)));
     /// ```
     pub fn check_victory(&self) -> Option<(Victory, Color)> {
+        if self.seventy_five_move_rule >= 75 {
+            return Some((Victory::Draw, Color::White));
+        }
+        if self.board_history.len() >= 5 {
+            info!("Checking for five fold repetition");
+            let mut matches = 0;
+            let last = match self.board_history.last() {
+                Some(v) => v,
+                None => panic!(),
+            };
+            'rep: for v in &self.board_history {
+                for x in 0..8 {
+                    for y in 0..8 {
+                        if v[x][y] != last[x][y] {
+                            continue 'rep;
+                        }
+                    }
+                }
+                matches += 1;
+            }
+
+            if matches >= 5 {
+                return Some((Victory::Draw, Color::White));
+            }
+        }
+
         'outer: for color in vec![Color::Black, Color::White] {
             let pieces = self.by_color(color);
 
@@ -1010,12 +1354,629 @@ impl<'a> Game<'a> {
 
             if self.in_check(color) {
                 return Some((Victory::Checkmate, opposite));
-            } else {
-                return Some((Victory::Remi, opposite));
+            } else if self.last_color != color {
+                return Some((Victory::Stalemate, opposite));
             }
         }
 
         None
+    }
+
+    /// Turns a move, as returned from `valid_moves`, into [algebraic
+    /// notation](https://en.wikipedia.org/wiki/Algebraic_notation_(chess)) (AN).
+    ///
+    /// If `result` is `true` the function will detect whether a checkmate or a stalemate has
+    /// occured, and add "1-0", "0-1" or "½-½".
+    ///
+    /// If `unicode` is `true` the pieces are represented by unicode symbols instead of letters.
+    /// Only black pieces are used, as they are easier to see.
+    ///
+    /// # Eksamples
+    ///
+    /// ```
+    /// # use chess::*;
+    /// let mut game = Game::new();
+    ///
+    /// // Turn a string from AN into a move, and back into AN.
+    /// let mut m = game.an_to_move("Nc3", Color::White).unwrap();
+    /// assert_eq!(game.move_to_an(&m, true, false), "Nc3");
+    /// assert_eq!(game.move_to_an(&m, true, true), "♞c3");
+    ///
+    /// m = game.an_to_move("e5", Color::Black).unwrap();
+    /// assert_eq!(game.move_to_an(&m, true, false), "e5");
+    /// ```
+    pub fn move_to_an(&self, m: &[((usize, usize), (usize, usize))], result: bool, unicode: bool) -> String {
+        let mut s = String::new();
+        let piece = match self.get_from_pos(m[0].0) {
+            Some(p) => p,
+            None => panic!("No piece at position ({}, {}).", (m[0].0).0, (m[0].0).1),
+        };
+        let dest = m.last().unwrap().1;
+        let mut capture: Option<&Piece> = None;
+        for v in m {
+            if let Some(p) = self.get_from_pos(v.1) {
+                if piece.color != p.color {
+                    capture = Some(p);
+                }
+            }
+        }
+
+        if m.len() == 3 {
+            if (m[0].1).0 == 3 {
+                s.push_str("0-0-0");
+            } else if (m[0].1).0 == 5 {
+                s.push_str("0-0");
+            } else {
+                panic!("Invalid castling move.");
+            }
+        } else {
+            if piece.kind == Kind::Pawn {
+                if let Some(_) = capture {
+                    s.push(match (m[0].0).0 {
+                        0 => 'a',
+                        1 => 'b',
+                        2 => 'c',
+                        3 => 'd',
+                        4 => 'e',
+                        5 => 'f',
+                        6 => 'g',
+                        7 => 'h',
+                        _ => panic!(),
+                    });
+                }
+            } else if unicode {
+                s.push(
+                    match piece.kind {
+                        Kind::Rook => '\u{265c}',
+                        Kind::Knight => '\u{265e}',
+                        Kind::Bishop => '\u{265d}',
+                        Kind::Queen => '\u{265b}',
+                        Kind::King => '\u{265a}',
+                        _ => panic!(),
+                    });
+            } else {
+                match piece.kind {
+                    Kind::Rook => s.push('R'),
+                    Kind::Knight => s.push('N'),
+                    Kind::Bishop => s.push('B'),
+                    Kind::Queen => s.push('Q'),
+                    Kind::King => s.push('K'),
+                    _ => panic!(),
+                }
+            }
+
+            let mut row = false;
+            let mut col = false;
+            for i in self.by_kind_and_color(piece.kind, piece.color) {
+                let (pos, _) = i;
+                if pos.0 != (m[0].0).0 && pos.1 != (m[0].0).1 {
+                    for v in self.valid_moves(pos) {
+                        let (tmp_x, tmp_y) = v.last().unwrap().1;
+                        if tmp_x == dest.0 && tmp_y == dest.1 {
+                            if pos.0 == (m[0].0).0 {
+                                row = true;
+                            } else {
+                                col = true;
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            if col {
+                s.push(match (m[0].0).0 {
+                    0 => 'a',
+                    1 => 'b',
+                    2 => 'c',
+                    3 => 'd',
+                    4 => 'e',
+                    5 => 'f',
+                    6 => 'g',
+                    7 => 'h',
+                    _ => panic!(),
+                });
+            }
+            if row {
+                s.push(match (m[0].0).1 {
+                    0 => '1',
+                    1 => '2',
+                    2 => '3',
+                    3 => '4',
+                    4 => '5',
+                    5 => '6',
+                    6 => '7',
+                    7 => '8',
+                    _ => panic!(),
+                });
+            }
+
+            if let Some(_) = capture {
+                s.push('x');
+            }
+
+            s.push(match dest.0 {
+                0 => 'a',
+                1 => 'b',
+                2 => 'c',
+                3 => 'd',
+                4 => 'e',
+                5 => 'f',
+                6 => 'g',
+                7 => 'h',
+                _ => panic!(),
+            });
+
+            s.push(match dest.1 {
+                0 => '1',
+                1 => '2',
+                2 => '3',
+                3 => '4',
+                4 => '5',
+                5 => '6',
+                6 => '7',
+                7 => '8',
+                _ => panic!(),
+            });
+
+            if m.len() == 2 {
+                if let Kind::Pawn = piece.kind {
+                    s.push_str("e.p.");
+                } else {
+                    panic!("Only pawns should be able to have moves that consists of two moves.");
+                }
+            }
+            if piece.kind == Kind::Pawn && (dest.1 == 7 || dest.1 == 0) {
+                s.push_str("=Q");
+            }
+        }
+
+        let other_color = match piece.color {
+            Color::White => Color::Black,
+            Color::Black => Color::White,
+        };
+        let mut g = self.clone();
+
+        g.move_pieces(m);
+        if let Some(v) = g.check_victory() {
+            if result {
+                if let Victory::Checkmate = v.0 {
+                    s.push('#');
+                    match piece.color {
+                        Color::White => s.push_str(" 1-0"),
+                        Color::Black => s.push_str(" 0-1"),
+                    }
+                } else {
+                    s.push_str(" ½-½");
+                }
+            }
+        } else if g.in_check(other_color) {
+            s.push('+');
+        }
+
+        s
+    }
+
+    /// Turns a string in [algebraic
+    /// notation](https://en.wikipedia.org/wiki/Algebraic_notation_(chess)) (AN) into a move that can be passed to `move_pieces`.
+    ///
+    /// This function supports abbreviated algebraic notation, which means that certain characters
+    /// can be removed, as long as it is unambiguous. For example, an 'x' (which signals a capture)
+    /// is completely ignored, and can even be added to moves that doesn't end with a capture. The
+    /// same goes for '=Q' (which signals a pawn promotion) and 'e.p.' (which signals *en passant*).
+    ///
+    /// The pieces can be represented by both letters and unicode symbols.
+    ///
+    /// To get the proper algebraic notation instead of the abbreviated one from a user, pass the
+    /// result of `an_to_move` to `move_to_an`.
+    ///
+    /// This function returns `None` both if the input is malformed and if the move is invalid.
+    /// There is currently no way to distinguish the two.
+    ///
+    /// # Eksamples
+    ///
+    /// ```
+    /// # use chess::*;
+    /// let mut game = Game::new();
+    /// // Start by moving a knight from B1 to C3.
+    /// let mut m = game.an_to_move("Nc3", Color::White);
+    /// assert_eq!(m, Some(vec![((1, 0), (2, 2))]));
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Move a black pawn from D7 to D5.
+    /// m = game.an_to_move("d5", Color::Black);
+    /// assert_eq!(m, Some(vec![((3, 6), (3, 4))]));
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// m = game.an_to_move("e4", Color::White);
+    /// assert_eq!(m, Some(vec![((4, 1), (4, 3))]));
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Now the pawn at D5 can capture the pawn at E4.
+    /// m = game.an_to_move("dxe4", Color::Black);
+    /// assert_eq!(m, Some(vec![((3, 4), (4, 3))]));
+    /// // Abbreviated notation is also valid.
+    /// assert_eq!(m, game.an_to_move("de4", Color::Black));
+    /// assert_eq!(m, game.an_to_move("de", Color::Black));
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Fast-forwards a little.
+    /// m = game.an_to_move("Nf3", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    /// m = game.an_to_move("Ng5", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Now both white knights can reach E4, so "Ne4" isn't enough.
+    /// m = game.an_to_move("Ne4", Color::White);
+    /// assert_eq!(m, None);
+    ///
+    /// // ...so we must specify the file the knight is moving from.
+    /// m = game.an_to_move("Nce4", Color::White);
+    /// assert_eq!(m, Some(vec![((2, 2), (4, 3))]));
+    ///
+    /// // We could also specify the rank, or both the rank and the file.
+    /// assert_eq!(m, game.an_to_move("N3e4", Color::White));
+    /// assert_eq!(m, game.an_to_move("Nc3e4", Color::White));
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Fast forwards some more.
+    /// m = game.an_to_move("Qf3", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    /// m = game.an_to_move("Be2", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    /// m = game.an_to_move("b3", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    /// m = game.an_to_move("Bb2", Color::White);
+    /// game.move_pieces(&m.unwrap());
+    ///
+    /// // Kingside castling.
+    /// m = game.an_to_move("0-0", Color::White);
+    /// assert_eq!(m, Some(vec![((4, 0), (5, 0)), ((5, 0), (6, 0)), ((7, 0), (5, 0))]));
+    ///
+    /// // Queenside castling.
+    /// m = game.an_to_move("0-0-0", Color::White);
+    /// assert_eq!(m, Some(vec![((4, 0), (3, 0)), ((3, 0), (2, 0)), ((0, 0), (3, 0))]));
+    /// ```
+    pub fn an_to_move(&self, s: &str, color: Color) -> Option<Vec<((usize, usize), (usize, usize))>> {
+        let mut len = s.len();
+        let mut result: Option<Vec<((usize, usize), (usize, usize))>> = None;
+        let mut pos_x: Option<usize> = None;
+        let mut pos_y: Option<usize> = None;
+        let target_pos_x: Option<usize>;
+        let mut target_pos_y: Option<usize> = None;
+
+        if len < 2 {
+            return None;
+        }
+
+        if s == "0-0" || s == "0-0-0" {
+            let tmp = self.by_kind_and_color(Kind::King, color);
+            let v = tmp.last().unwrap();
+            for m in self.valid_moves(v.0) {
+                if (s == "0-0" && (m[0].1).0 == 5) ||
+                   (s == "0-0-0" && (m[0].1).0 == 3) {
+                    return Some(m);
+                }
+            }
+            return None;
+        }
+
+        let kind = match s.chars().nth(0).unwrap() {
+            'R' | '\u{2656}' | '\u{265c}' => Kind::Rook,
+            'N' | '\u{2658}' | '\u{265e}' => Kind::Knight,
+            'B' | '\u{2657}' | '\u{265d}' => Kind::Bishop,
+            'Q' | '\u{2655}' | '\u{265b}' => Kind::Queen,
+            'K' | '\u{2654}' | '\u{265a}' => Kind::King,
+            _   => Kind::Pawn,
+        };
+
+        if let Kind::Pawn = kind {
+            if len >= 6 && &s[len-4..len] == "e.p." {
+                len -= 4;
+            } else if len >= 4 && &s[len-2..len] == "=Q" {
+                len -= 2;
+            }
+
+            match string_to_pos(&s[len-2..len]) {
+                Ok(pos) => {
+                    target_pos_x = Some(pos.0);
+                    target_pos_y = Some(pos.1);
+                },
+                Err(_) => {
+                    let mut last = s.chars().nth(len-1).unwrap().to_string();
+                    last.push('1');
+                    match string_to_pos(&last) {
+                        Ok(pos) => {
+                            target_pos_x = Some(pos.0);
+                        },
+                        Err(_) => return None,
+                    }
+                },
+            }
+
+            if len >= 2 {
+                match string_to_pos(&s[0..2]) {
+                    Ok(pos) => {
+                        if len > 2 {
+                            pos_x = Some(pos.0);
+                            pos_y = Some(pos.1);
+                        }
+                    },
+                    Err(_) => {
+                        let mut last = s.chars().nth(0).unwrap().to_string();
+                        last.push('1');
+                        match string_to_pos(&last) {
+                            Ok(pos) => {
+                                pos_x = Some(pos.0);
+                            },
+                            Err(_) => return None,
+                        }
+                    },
+                }
+            }
+        } else {
+            if len < 3 {
+                return None;
+            } else if len > 3 {
+                match string_to_pos(&s[1..3]) {
+                    Ok(pos) => {
+                        pos_x = Some(pos.0);
+                        pos_y = Some(pos.1);
+                    },
+                    Err(_) => {
+                        let mut tile = s.chars().nth(1).unwrap().to_string();
+                        if tile != "x" {
+                            tile.push('1');
+                            match string_to_pos(&tile) {
+                                Ok(pos) => {
+                                    pos_x = Some(pos.0);
+                                },
+                                Err(_) => {
+                                    let mut rank = "E".to_string();
+                                    rank.push(s.chars().nth(1).unwrap());
+                                    match string_to_pos(&rank) {
+                                        Ok(pos) => {
+                                            pos_y = Some(pos.1);
+                                        },
+                                        Err(_) => return None,
+                                    }
+                                },
+                            }
+                        }
+                    },
+                }
+            }
+
+            match string_to_pos(&s[len-2..len]) {
+                Ok(pos) => {
+                    target_pos_x = Some(pos.0);
+                    target_pos_y = Some(pos.1);
+                },
+                Err(_) => return None,
+            }
+        }
+
+        let mut last: (usize, usize);
+        let mut found = false;
+        for p in self.by_kind_and_color(kind, color) {
+            if pos_x.unwrap_or((p.0).0) == (p.0).0 &&
+               pos_y.unwrap_or((p.0).1) == (p.0).1 {
+                for v in self.valid_moves(p.0) {
+                    last = v.last().unwrap().1;
+                    if target_pos_x.unwrap_or(last.0) == last.0 &&
+                       target_pos_y.unwrap_or(last.1) == last.1 {
+                        if found {
+                            return None;
+                        } else {
+                            found = true;
+                            result = Some(v);
+                        }
+                    }
+                }
+            }
+        }
+
+        result
+    }
+
+    /// Turns a move tuple into a human readable description.
+    ///
+    /// # Eksamples
+    ///
+    /// ```
+    /// # use chess::*;
+    /// let game = Game::new();
+    /// let m = game.valid_moves((4, 1));
+    /// assert_eq!(game.move_to_string(&m[0][0]), "Moving white pawn from E2 to E4");
+    /// ```
+    pub fn move_to_string(&self, m: &((usize, usize), (usize, usize))) -> String {
+        let mut s = String::new();
+        let from = m.0;
+        let to = m.1;
+
+        let from_string = match pos_to_string(from) {
+            Ok(s) => s,
+            Err(e) => panic!("Invalid position ({}, {}). Error code {}", from.0, from.1, e),
+        };
+        let to_string = match pos_to_string(to) {
+            Ok(s) => s,
+            Err(e) => panic!("Invalid position ({}, {}). Error code {}", to.0, to.1, e),
+        };
+
+        if let Some(p) = self.get_from_pos(from) {
+            s.push_str(&format!("Moving {} {} ", p.color, p.kind));
+        } else {
+            s.push_str("Moving ");
+        }
+        s.push_str(&format!("from {} to ", from_string));
+
+        if let Some(p) = self.get_from_pos(to) {
+            s.push_str(&format!("{} {} at ", p.color, p.kind));
+        }
+        s.push_str(&format!("{}", to_string));
+
+        s
+    }
+
+    /// Turns an array of move tuples, like entries returned from valid_moves, into a human readable description.
+    ///
+    /// # Eksamples
+    ///
+    /// ```
+    /// # use chess::*;
+    /// let game = Game::new();
+    /// let m = game.valid_moves((4, 1));
+    /// assert_eq!(game.moves_to_string(&m[0]), "Moving white pawn from E2 to E4");
+    /// ```
+    pub fn moves_to_string(&self, m: &[((usize, usize), (usize, usize))]) -> String {
+        let mut s = String::new();
+        let mut first = true;
+        for v in m {
+            if !first {
+                s.push_str("\n");
+            }
+            s.push_str(&self.move_to_string(v));
+            first = false;
+        }
+
+        s
+    }
+
+    /// Returns the game board as a string.
+    ///
+    /// Set `unicode` to true if you want the pieces represented by their [unicode symbols]
+    /// (https://en.wikipedia.org/wiki/Chess_symbols_in_Unicode) instead of letters.
+    /// If `unicode` is false the same letters that are used in [algebraic
+    /// notation](https://en.wikipedia.org/wiki/Algebraic_notation_(chess)) is
+    /// used, with the addition of 'P' for pawns. The white pieces are represented by uppercase
+    /// letters, while black are lowercase.
+    ///
+    /// # Eksamples
+    ///
+    /// ```
+    /// # use chess::*;
+    /// let game = Game::new();
+    /// let mut board = game.board_to_string(false);
+    /// assert_eq!(board,
+    ///            "rnbqkbnr\
+    ///           \npppppppp\
+    ///           \n        \
+    ///           \n        \
+    ///           \n        \
+    ///           \n        \
+    ///           \nPPPPPPPP\
+    ///           \nRNBQKBNR");
+    ///
+    /// board = game.board_to_string(true);
+    /// assert_eq!(board,
+    ///            "♜♞♝♛♚♝♞♜\
+    ///           \n♟♟♟♟♟♟♟♟\
+    ///           \n        \
+    ///           \n        \
+    ///           \n        \
+    ///           \n        \
+    ///           \n♙♙♙♙♙♙♙♙\
+    ///           \n♖♘♗♕♔♗♘♖");
+    /// ```
+    pub fn board_to_string(&self, unicode: bool) -> String {
+        let mut s = String::new();
+        let mut y: usize;
+
+        for y1 in 0..8 {
+            y = 7 - y1;
+            for x in 0..8 {
+                s.push( if let Some(p) = self.get_from_pos((x, y)) {
+                    match p.color {
+                        Color::White => {
+                            if unicode {
+                                match p.kind {
+                                    Kind::Pawn => '\u{2659}',
+                                    Kind::Rook => '\u{2656}',
+                                    Kind::Knight => '\u{2658}',
+                                    Kind::Bishop => '\u{2657}',
+                                    Kind::Queen => '\u{2655}',
+                                    Kind::King => '\u{2654}',
+                                }
+                            } else {
+                                match p.kind {
+                                    Kind::Pawn => 'P',
+                                    Kind::Rook => 'R',
+                                    Kind::Knight => 'N',
+                                    Kind::Bishop => 'B',
+                                    Kind::Queen => 'Q',
+                                    Kind::King => 'K',
+                                }
+                            }
+                        },
+                        Color::Black => {
+                            if unicode {
+                                match p.kind {
+                                    Kind::Pawn => '\u{265f}',
+                                    Kind::Rook => '\u{265c}',
+                                    Kind::Knight => '\u{265e}',
+                                    Kind::Bishop => '\u{265d}',
+                                    Kind::Queen => '\u{265b}',
+                                    Kind::King => '\u{265a}',
+                                }
+                            } else {
+                                match p.kind {
+                                    Kind::Pawn => 'p',
+                                    Kind::Rook => 'r',
+                                    Kind::Knight => 'n',
+                                    Kind::Bishop => 'b',
+                                    Kind::Queen => 'q',
+                                    Kind::King => 'k',
+                                }
+                            }
+                        },
+                    }
+                } else {
+                    ' '
+                });
+            }
+
+            if y != 0 {
+                s.push_str("\n");
+            }
+        }
+        s
+    }
+
+    fn save_board(&mut self) {
+        self.board_history.push(self.board);
+    }
+
+    /// Checks whether there has occured a three fold repetition.
+    pub fn three_fold_repetition(&self) -> bool {
+        if self.board_history.len() >= 3 {
+            info!("Checking for three fold repetition");
+            let mut matches = 0;
+            let last = match self.board_history.last() {
+                Some(v) => v,
+                None => panic!(),
+            };
+            'rep: for v in &self.board_history {
+                for x in 0..8 {
+                    for y in 0..8 {
+                        if v[x][y] != last[x][y] {
+                            continue 'rep;
+                        }
+                    }
+                }
+                matches += 1;
+            }
+
+            if matches >= 3 {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Checks whether a player can invoke the fifty-move-rule
+    pub fn fifty_move_rule(&self) -> bool {
+        self.seventy_five_move_rule >= 50
     }
 }
 
@@ -1147,5 +2108,31 @@ mod tests {
         game.set_at_pos((6, 7), Some(&WHITE[5]));
 
         assert!(game.check_for_check((0,0), (1,0)));
+    }
+
+    #[test]
+    fn test_print() {
+        let game = Game::new();
+        let mut board = game.board_to_string(false);
+        assert_eq!(board,
+                   "rnbqkbnr\
+                  \npppppppp\
+                  \n        \
+                  \n        \
+                  \n        \
+                  \n        \
+                  \nPPPPPPPP\
+                  \nRNBQKBNR");
+
+        board = game.board_to_string(true);
+        assert_eq!(board,
+                   "♜♞♝♛♚♝♞♜\
+                  \n♟♟♟♟♟♟♟♟\
+                  \n        \
+                  \n        \
+                  \n        \
+                  \n        \
+                  \n♙♙♙♙♙♙♙♙\
+                  \n♖♘♗♕♔♗♘♖");
     }
 }
