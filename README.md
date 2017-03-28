@@ -1,8 +1,8 @@
 # Chess library
 This is a library that handles all the logic behind a chess game, written in Rust.
-The full documentation can be found [here](https://kalkins.github.io/rust_chess/chess/)
+The full documentation can be found [here](https://kalkins.github.io/rust_chess/chess/).
 An implementation of this library in an actual chess game can be found
-[here](https://github.com/kalkins/rust_chess_cli).
+[here](https://github.com/kalkins/rust_chess_ctl).
 
 ## Automatic documentation
 To automatically update the documentation in the docs/ folder to show it on Github Pages,
