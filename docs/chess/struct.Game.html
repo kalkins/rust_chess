@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Game` struct in crate `chess`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Game">
+
+    <title>chess::Game - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>chess</a></p><script>window.sidebarCurrent = {name: 'Game', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>chess</a>::<wbr><a class='struct' href=''>Game</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/chess/lib.rs.html#152-167' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Game&lt;'a&gt; { /* fields omitted */ }</pre><div class='docblock'><p>The game struct.</p>
+
+<p>The coordinates used to access pieces are 0-indexed tuples of (usize, usize),
+and they follow the standard chess notation, so (0,0) corresponds to A1 in the bottom left corner,
+and (7,7) corresponds to H8 in the top right corner, seen from the white side.</p>
+
+<p>The pieces are stored as Option&lt;&amp;Piece&gt;, and are references to the pieces in the WHITE and
+BLACK array.</p>
+
+<h1 id='eksamples' class='section-header'><a href='#eksamples'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='comment'>// Create a new game, with all pieces in their initial position.</span>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+
+<span class='comment'>// The piece at C1 is supposed to be a bishop.</span>
+<span class='kw'>let</span> <span class='ident'>bishop</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>get_from_pos</span>((<span class='number'>2</span>,<span class='number'>0</span>));
+<span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>piece</span>) <span class='op'>=</span> <span class='ident'>bishop</span> {
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>kind</span>, <span class='ident'>Kind</span>::<span class='ident'>Bishop</span>);
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>color</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+} <span class='kw'>else</span> {
+    <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;The piece at A1 should be a bishop.&quot;</span>);
+}</pre>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='struct' href='../chess/struct.Game.html' title='chess::Game'>Game</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/chess/lib.rs.html#169-1981' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><span id='new.v' class='invisible'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../chess/struct.Game.html' title='chess::Game'>Game</a>&lt;'a&gt;</code></span></h4>
+<div class='docblock'><p>Creates a new game, with all the pieces in the correct starting position.</p>
+
+<h1 id='eksamples-1' class='section-header'><a href='#eksamples-1'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();</pre>
+</div><h4 id='method.new_empty' class='method'><span id='new_empty.v' class='invisible'><code>fn <a href='#method.new_empty' class='fnname'>new_empty</a>() -&gt; <a class='struct' href='../chess/struct.Game.html' title='chess::Game'>Game</a>&lt;'a&gt;</code></span></h4>
+<div class='docblock'><p>Creates a new game with an empty board.</p>
+
+<h1 id='eksamples-2' class='section-header'><a href='#eksamples-2'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new_empty</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>by_color</span>(<span class='ident'>Color</span>::<span class='ident'>White</span>).<span class='ident'>len</span>(), <span class='number'>0</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>by_color</span>(<span class='ident'>Color</span>::<span class='ident'>Black</span>).<span class='ident'>len</span>(), <span class='number'>0</span>);</pre>
+</div><h4 id='method.clear' class='method'><span id='clear.v' class='invisible'><code>fn <a href='#method.clear' class='fnname'>clear</a>(&amp;mut self)</code></span></h4>
+<div class='docblock'><p>Clears the board.</p>
+
+<h1 id='eksamples-3' class='section-header'><a href='#eksamples-3'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>by_color</span>(<span class='ident'>Color</span>::<span class='ident'>White</span>).<span class='ident'>len</span>(), <span class='number'>16</span>);
+
+<span class='ident'>game</span>.<span class='ident'>clear</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>by_color</span>(<span class='ident'>Color</span>::<span class='ident'>White</span>).<span class='ident'>len</span>(), <span class='number'>0</span>);</pre>
+</div><h4 id='method.ignore_kings' class='method'><span id='ignore_kings.v' class='invisible'><code>fn <a href='#method.ignore_kings' class='fnname'>ignore_kings</a>(&amp;mut self, ignore: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>)</code></span></h4>
+<div class='docblock'><p>Tells the game whether to ignore a lack of kings.</p>
+
+<p>The game still sees if a possible move puts a king in check, but it no longer panics if one
+or both kings are missing. This can be useful when setting up special challenges.</p>
+
+<h1 id='eksamples-4' class='section-header'><a href='#eksamples-4'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new_empty</span>();
+<span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='number'>3</span>, <span class='number'>3</span>), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>WHITE</span>[<span class='number'>3</span>]));
+
+<span class='comment'>// This would cause a panic</span>
+<span class='comment'>// game.valid_moves((3, 3));</span>
+
+<span class='ident'>game</span>.<span class='ident'>ignore_kings</span>(<span class='bool-val'>true</span>);
+<span class='ident'>game</span>.<span class='ident'>valid_moves</span>((<span class='number'>3</span>, <span class='number'>3</span>));</pre>
+</div><h4 id='method.ignore_check' class='method'><span id='ignore_check.v' class='invisible'><code>fn <a href='#method.ignore_check' class='fnname'>ignore_check</a>(&amp;mut self, ignore: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>)</code></span></h4>
+<div class='docblock'><p>Tells the game whether to ignore check tests.</p>
+
+<h1 id='eksamples-5' class='section-header'><a href='#eksamples-5'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new_empty</span>();
+<span class='comment'>// Put a black queen on D4 and a white king on C2</span>
+<span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='number'>3</span>, <span class='number'>3</span>), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>BLACK</span>[<span class='number'>4</span>]));
+<span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='number'>2</span>, <span class='number'>1</span>), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>WHITE</span>[<span class='number'>5</span>]));
+
+<span class='comment'>// With check tests in place, the king can only move to B1, B3 and C1.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>valid_moves</span>((<span class='number'>2</span>, <span class='number'>1</span>)).<span class='ident'>len</span>(), <span class='number'>3</span>);
+
+<span class='comment'>// Whithout check tests the king can also move to B2, C3, D1, D2 and D3.</span>
+<span class='ident'>game</span>.<span class='ident'>ignore_check</span>(<span class='bool-val'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>valid_moves</span>((<span class='number'>2</span>, <span class='number'>1</span>)).<span class='ident'>len</span>(), <span class='number'>8</span>);</pre>
+</div><h4 id='method.get_from_pos' class='method'><span id='get_from_pos.v' class='invisible'><code>fn <a href='#method.get_from_pos' class='fnname'>get_from_pos</a>(&amp;self, pos: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a class='struct' href='../chess/struct.Piece.html' title='chess::Piece'>Piece</a>&gt;</code></span></h4>
+<div class='docblock'><p>Gets the piece at the given position on the board.</p>
+
+<p>Returns an Option where Some contains a reference to the piece,
+and None means there was no piece at the given position.</p>
+
+<h1 id='eksamples-6' class='section-header'><a href='#eksamples-6'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+
+<span class='comment'>// Get the piece from A1</span>
+<span class='kw'>match</span> <span class='ident'>game</span>.<span class='ident'>get_from_pos</span>((<span class='number'>0</span>, <span class='number'>0</span>)) {
+    <span class='prelude-val'>Some</span>(<span class='ident'>piece</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>kind</span>, <span class='ident'>Kind</span>::<span class='ident'>Rook</span>),
+    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;There should be a rook here.&quot;</span>),
+}
+
+<span class='comment'>// Returns None if the position is empty.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>get_from_pos</span>((<span class='number'>3</span>, <span class='number'>4</span>)), <span class='prelude-val'>None</span>);</pre>
+</div><h4 id='method.set_at_pos' class='method'><span id='set_at_pos.v' class='invisible'><code>fn <a href='#method.set_at_pos' class='fnname'>set_at_pos</a>(&amp;mut self, pos: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, piece: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a class='struct' href='../chess/struct.Piece.html' title='chess::Piece'>Piece</a>&gt;)</code></span></h4>
+<div class='docblock'><p>Sets the piece at the given position on the board.</p>
+
+<p>The piece is passed as an Option, where the Some should contain a
+reference to the WHITE or BLACK arrays. Pass None to remove an existing piece.</p>
+
+<h1 id='eksamples-7' class='section-header'><a href='#eksamples-7'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+
+<span class='comment'>// Replace all white pawns with queens.</span>
+<span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>8</span> {
+    <span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='ident'>i</span>, <span class='number'>1</span>), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>WHITE</span>[<span class='number'>4</span>]));
+    <span class='kw'>match</span> <span class='ident'>game</span>.<span class='ident'>get_from_pos</span>((<span class='ident'>i</span>, <span class='number'>1</span>)) {
+        <span class='prelude-val'>Some</span>(<span class='ident'>piece</span>) <span class='op'>=&gt;</span> {
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>kind</span>, <span class='ident'>Kind</span>::<span class='ident'>Queen</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>color</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+        },
+        <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;There should be a queen here.&quot;</span>),
+    }
+}</pre>
+</div><h4 id='method.get_turn' class='method'><span id='get_turn.v' class='invisible'><code>fn <a href='#method.get_turn' class='fnname'>get_turn</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a></code></span></h4>
+<div class='docblock'><p>Returns the current turn.</p>
+</div><h4 id='method.next_turn' class='method'><span id='next_turn.v' class='invisible'><code>fn <a href='#method.next_turn' class='fnname'>next_turn</a>(&amp;mut self)</code></span></h4>
+<div class='docblock'><p>Advances the game to the next turn.</p>
+</div><h4 id='method.by_color' class='method'><span id='by_color.v' class='invisible'><code>fn <a href='#method.by_color' class='fnname'>by_color</a>(&amp;self, color: <a class='enum' href='../chess/enum.Color.html' title='chess::Color'>Color</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, &amp;'a <a class='struct' href='../chess/struct.Piece.html' title='chess::Piece'>Piece</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;</code></span></h4>
+<div class='docblock'><p>Returns a vector of all pieces of a given color, and their position on the board.</p>
+
+<p>The pieces are arrenged in the order they are found, starting at A1 through H1, then A2
+through H2, until it reaches H8.</p>
+
+<h1 id='eksamples-8' class='section-header'><a href='#eksamples-8'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+
+<span class='comment'>// At the start of a chess game there should be 16 pieces of each color.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>by_color</span>(<span class='ident'>Color</span>::<span class='ident'>White</span>).<span class='ident'>len</span>(), <span class='number'>16</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>by_color</span>(<span class='ident'>Color</span>::<span class='ident'>Black</span>).<span class='ident'>len</span>(), <span class='number'>16</span>);
+
+<span class='comment'>// The 9th white piece should be the pawn at A2.</span>
+<span class='kw'>let</span> <span class='ident'>pieces</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>by_color</span>(<span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pieces</span>[<span class='number'>8</span>].<span class='number'>0</span>, (<span class='number'>0</span>, <span class='number'>1</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pieces</span>[<span class='number'>8</span>].<span class='number'>1</span>.<span class='ident'>kind</span>, <span class='ident'>Kind</span>::<span class='ident'>Pawn</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pieces</span>[<span class='number'>8</span>].<span class='number'>1</span>.<span class='ident'>color</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);</pre>
+</div><h4 id='method.by_kind' class='method'><span id='by_kind.v' class='invisible'><code>fn <a href='#method.by_kind' class='fnname'>by_kind</a>(&amp;self, kind: <a class='enum' href='../chess/enum.Kind.html' title='chess::Kind'>Kind</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, &amp;'a <a class='struct' href='../chess/struct.Piece.html' title='chess::Piece'>Piece</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;</code></span></h4>
+<div class='docblock'><p>Returns a vector of all pieces of a given kind, and their position on the board.</p>
+
+<p>The pieces are arrenged in the order they are found, starting at A1 through H1, then A2
+through H2, until it reaches H8.</p>
+
+<h1 id='eksamples-9' class='section-header'><a href='#eksamples-9'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+
+<span class='comment'>// At the start of a chess game there should be 16 pawns and 2 kings.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>by_kind</span>(<span class='ident'>Kind</span>::<span class='ident'>Pawn</span>).<span class='ident'>len</span>(), <span class='number'>16</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>by_kind</span>(<span class='ident'>Kind</span>::<span class='ident'>King</span>).<span class='ident'>len</span>(), <span class='number'>2</span>);
+
+<span class='comment'>// The 13th pawn should be the black pawn at E7..</span>
+<span class='kw'>let</span> <span class='ident'>pawns</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>by_kind</span>(<span class='ident'>Kind</span>::<span class='ident'>Pawn</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pawns</span>[<span class='number'>12</span>].<span class='number'>0</span>, (<span class='number'>4</span>, <span class='number'>6</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pawns</span>[<span class='number'>12</span>].<span class='number'>1</span>.<span class='ident'>kind</span>, <span class='ident'>Kind</span>::<span class='ident'>Pawn</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pawns</span>[<span class='number'>12</span>].<span class='number'>1</span>.<span class='ident'>color</span>, <span class='ident'>Color</span>::<span class='ident'>Black</span>);</pre>
+</div><h4 id='method.by_kind_and_color' class='method'><span id='by_kind_and_color.v' class='invisible'><code>fn <a href='#method.by_kind_and_color' class='fnname'>by_kind_and_color</a>(&amp;self,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; kind: <a class='enum' href='../chess/enum.Kind.html' title='chess::Kind'>Kind</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; color: <a class='enum' href='../chess/enum.Color.html' title='chess::Color'>Color</a>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, &amp;'a <a class='struct' href='../chess/struct.Piece.html' title='chess::Piece'>Piece</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;</code></span></h4>
+<div class='docblock'><p>Returns a vector of all pieces of a given kind and color, and their position on the board.</p>
+
+<p>The pieces are arrenged in the order they are found, starting at A1 through H1, then A2
+through H2, until it reaches H8.</p>
+
+<h1 id='eksamples-10' class='section-header'><a href='#eksamples-10'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+
+<span class='comment'>// At the start of a chess game there should be 8 black pawns and 2 white knights.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>by_kind_and_color</span>(<span class='ident'>Kind</span>::<span class='ident'>Pawn</span>, <span class='ident'>Color</span>::<span class='ident'>Black</span>).<span class='ident'>len</span>(), <span class='number'>8</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>by_kind_and_color</span>(<span class='ident'>Kind</span>::<span class='ident'>Knight</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>).<span class='ident'>len</span>(), <span class='number'>2</span>);
+
+<span class='comment'>// The 2nd black bishop should be at F8.</span>
+<span class='kw'>let</span> <span class='ident'>bishops</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>by_kind_and_color</span>(<span class='ident'>Kind</span>::<span class='ident'>Bishop</span>, <span class='ident'>Color</span>::<span class='ident'>Black</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>bishops</span>[<span class='number'>1</span>].<span class='number'>0</span>, (<span class='number'>5</span>, <span class='number'>7</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>bishops</span>[<span class='number'>1</span>].<span class='number'>1</span>.<span class='ident'>kind</span>, <span class='ident'>Kind</span>::<span class='ident'>Bishop</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>bishops</span>[<span class='number'>1</span>].<span class='number'>1</span>.<span class='ident'>color</span>, <span class='ident'>Color</span>::<span class='ident'>Black</span>);</pre>
+</div><h4 id='method.move_piece' class='method'><span id='move_piece.v' class='invisible'><code>fn <a href='#method.move_piece' class='fnname'>move_piece</a>(&amp;mut self,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; from: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; to: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a class='struct' href='../chess/struct.Piece.html' title='chess::Piece'>Piece</a>&gt;</code></span></h4>
+<div class='docblock'><p>Moves a piece from one position to another.</p>
+
+<p>The return value is an Option containing a reference to the captured piece (if any), or
+None if either of the positions given were empty. Trying to move from a position that
+doesn&#39;t contain a piece therefore returns None.</p>
+
+<p>This function doesn&#39;t check whether the move is valid, only that the positions are within
+bounds. Therefore this should always be used together with valid_moves when playing proper
+chess.</p>
+
+<h1 id='eksamples-11' class='section-header'><a href='#eksamples-11'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+
+<span class='comment'>// Move a pawn from D2 to D3.</span>
+<span class='comment'>// This returns None because no pieces were captured.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>move_piece</span>((<span class='number'>3</span>, <span class='number'>1</span>), (<span class='number'>3</span>, <span class='number'>2</span>)), <span class='prelude-val'>None</span>);
+
+<span class='comment'>// The original position is now empty.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>get_from_pos</span>((<span class='number'>3</span>, <span class='number'>1</span>)), <span class='prelude-val'>None</span>);
+<span class='comment'>// And the new position contains the pawn.</span>
+<span class='kw'>match</span> <span class='ident'>game</span>.<span class='ident'>get_from_pos</span>((<span class='number'>3</span>, <span class='number'>2</span>)) {
+    <span class='prelude-val'>Some</span>(<span class='ident'>piece</span>) <span class='op'>=&gt;</span> {
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>kind</span>, <span class='ident'>Kind</span>::<span class='ident'>Pawn</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>color</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+    },
+    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;There should be a pawn here.&quot;</span>),
+}
+
+<span class='comment'>// Moving a pawn from D3 to H8 is illegal in chess, but can be done here.</span>
+<span class='comment'>// The captured rook is removed from the board, and returned.</span>
+<span class='kw'>let</span> <span class='ident'>captured</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>move_piece</span>((<span class='number'>3</span>, <span class='number'>2</span>), (<span class='number'>7</span>, <span class='number'>7</span>));
+<span class='kw'>match</span> <span class='ident'>captured</span> {
+    <span class='prelude-val'>Some</span>(<span class='ident'>piece</span>) <span class='op'>=&gt;</span> {
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>kind</span>, <span class='ident'>Kind</span>::<span class='ident'>Rook</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>color</span>, <span class='ident'>Color</span>::<span class='ident'>Black</span>);
+    },
+    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;There should be a captured piece here.&quot;</span>),
+}
+
+<span class='comment'>// There is no piece at B4, so trying to move from there is just returning None.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>move_piece</span>((<span class='number'>1</span>, <span class='number'>3</span>), (<span class='number'>4</span>, <span class='number'>0</span>)), <span class='prelude-val'>None</span>);</pre>
+</div><h4 id='method.move_pieces' class='method'><span id='move_pieces.v' class='invisible'><code>fn <a href='#method.move_pieces' class='fnname'>move_pieces</a>(&amp;mut self,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; moves: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a class='struct' href='../chess/struct.Piece.html' title='chess::Piece'>Piece</a>&gt;</code></span></h4>
+<div class='docblock'><p>Executes several moves, as stated in the given array.</p>
+
+<p>The return value is Some containing the last captured piece (if any), or None if no pieces
+were captured or no pieces were moved. If one of the moves is out of bounds no moves are
+executed, and None is returned.</p>
+
+<p>In cases where only one piece must be moved manually, move_piece is preferred.</p>
+
+<p>This function is supposed to be called with the result of valid_moves. It is used instead
+of move_piece in case complex moves where several pieces is moved, like castling, is
+nessessary. This function doesn&#39;t check whether the moves are legal.</p>
+
+<h1 id='eksamples-12' class='section-header'><a href='#eksamples-12'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>moves</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>((<span class='ident'>usize</span>, <span class='ident'>usize</span>), (<span class='ident'>usize</span>, <span class='ident'>usize</span>))<span class='op'>&gt;</span>;
+
+<span class='comment'>// Move a pawn from E2 forwards twice.</span>
+<span class='ident'>moves</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[((<span class='number'>4</span>, <span class='number'>1</span>), (<span class='number'>4</span>, <span class='number'>2</span>)), ((<span class='number'>4</span>, <span class='number'>2</span>), (<span class='number'>4</span>, <span class='number'>3</span>))];
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>moves</span>), <span class='prelude-val'>None</span>);
+<span class='kw'>match</span> <span class='ident'>game</span>.<span class='ident'>get_from_pos</span>((<span class='number'>4</span>, <span class='number'>3</span>)) {
+    <span class='prelude-val'>Some</span>(<span class='ident'>piece</span>) <span class='op'>=&gt;</span> {
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>kind</span>, <span class='ident'>Kind</span>::<span class='ident'>Pawn</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>color</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+    },
+    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;There should be a pawn here.&quot;</span>),
+}
+
+<span class='comment'>// When two pieces are captured only the last one is returned.</span>
+<span class='comment'>// Moves the pawn from E4, captures the queen at D8, then captures the rook at H8.</span>
+<span class='ident'>moves</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[((<span class='number'>4</span>, <span class='number'>3</span>), (<span class='number'>3</span>, <span class='number'>7</span>)), ((<span class='number'>3</span>, <span class='number'>7</span>), (<span class='number'>7</span>, <span class='number'>7</span>))];
+<span class='kw'>let</span> <span class='ident'>captured</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>moves</span>);
+<span class='kw'>match</span> <span class='ident'>captured</span> {
+    <span class='prelude-val'>Some</span>(<span class='ident'>piece</span>) <span class='op'>=&gt;</span> {
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>kind</span>, <span class='ident'>Kind</span>::<span class='ident'>Rook</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>color</span>, <span class='ident'>Color</span>::<span class='ident'>Black</span>);
+    },
+    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;There should be a rook here.&quot;</span>),
+}</pre>
+</div><h4 id='method.valid_moves' class='method'><span id='valid_moves.v' class='invisible'><code>fn <a href='#method.valid_moves' class='fnname'>valid_moves</a>(&amp;self,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; pos: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;&gt;</code></span></h4>
+<div class='docblock'><p>Returns a vector of all the moves the piece at the given position can make.</p>
+
+<p>The returned vector contains vectors of moves, as a tuple of the current location and the
+destination. This is done so that more complex moves that involve moving several pieces,
+such as castling, can be carried out. Each of these vectors can be passed to move_pieces to
+be executed.</p>
+
+<p>If the given position doesn&#39;t contain a piece, a vector with size 0 is returned.</p>
+
+<h1 id='eksamples-13' class='section-header'><a href='#eksamples-13'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+
+<span class='comment'>// The pawn at E2 can only move forwards one or two squares.</span>
+<span class='kw'>let</span> <span class='ident'>moves</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>valid_moves</span>((<span class='number'>4</span>, <span class='number'>1</span>));
+<span class='comment'>// The returned vector contains two possible moves, each requiering only one move</span>
+<span class='comment'>// to be carried out.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>moves</span>.<span class='ident'>len</span>(), <span class='number'>2</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>moves</span>[<span class='number'>0</span>].<span class='ident'>len</span>(), <span class='number'>1</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>moves</span>[<span class='number'>1</span>].<span class='ident'>len</span>(), <span class='number'>1</span>);
+
+<span class='comment'>// The pawn can be moved to squares forwards.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>moves</span>[<span class='number'>0</span>][<span class='number'>0</span>].<span class='number'>0</span>, (<span class='number'>4</span>, <span class='number'>1</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>moves</span>[<span class='number'>0</span>][<span class='number'>0</span>].<span class='number'>1</span>, (<span class='number'>4</span>, <span class='number'>3</span>));
+
+<span class='comment'>// Or one step forwards.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>moves</span>[<span class='number'>1</span>][<span class='number'>0</span>].<span class='number'>0</span>, (<span class='number'>4</span>, <span class='number'>1</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>moves</span>[<span class='number'>1</span>][<span class='number'>0</span>].<span class='number'>1</span>, (<span class='number'>4</span>, <span class='number'>2</span>));
+
+<span class='comment'>// Lets move it two steps forwards, to E4.</span>
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>moves</span>[<span class='number'>0</span>]);
+<span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>get_from_pos</span>((<span class='number'>4</span>, <span class='number'>3</span>)) <span class='op'>!=</span> <span class='prelude-val'>None</span>);
+<span class='comment'>// Advance the turn. This is nessessary for some internal handling.</span>
+<span class='ident'>game</span>.<span class='ident'>next_turn</span>();
+
+<span class='comment'>// Now we move a black pawn from D7 to D5.</span>
+<span class='kw'>for</span> <span class='ident'>v</span> <span class='kw'>in</span> <span class='ident'>game</span>.<span class='ident'>valid_moves</span>((<span class='number'>3</span>, <span class='number'>6</span>)) {
+    <span class='kw'>if</span> <span class='ident'>v</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>1</span> <span class='op'>&amp;&amp;</span> <span class='ident'>v</span>[<span class='number'>0</span>].<span class='number'>1</span> <span class='op'>==</span> (<span class='number'>3</span>, <span class='number'>4</span>) {
+        <span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>v</span>);
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>get_from_pos</span>((<span class='number'>3</span>, <span class='number'>4</span>)) <span class='op'>!=</span> <span class='prelude-val'>None</span>);
+        <span class='ident'>game</span>.<span class='ident'>next_turn</span>();
+        <span class='kw'>break</span>;
+    }
+}
+
+<span class='comment'>// Now the white pawn can capture the black pawn at D5.</span>
+<span class='kw'>for</span> <span class='ident'>v</span> <span class='kw'>in</span> <span class='ident'>game</span>.<span class='ident'>valid_moves</span>((<span class='number'>4</span>, <span class='number'>3</span>)) {
+    <span class='kw'>if</span> <span class='ident'>v</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>1</span> <span class='op'>&amp;&amp;</span> <span class='ident'>v</span>[<span class='number'>0</span>].<span class='number'>1</span> <span class='op'>==</span> (<span class='number'>3</span>, <span class='number'>4</span>) {
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>v</span>) <span class='op'>!=</span> <span class='prelude-val'>None</span>);
+        <span class='kw'>match</span> <span class='ident'>game</span>.<span class='ident'>get_from_pos</span>((<span class='number'>3</span>, <span class='number'>4</span>)) {
+            <span class='prelude-val'>Some</span>(<span class='ident'>piece</span>) <span class='op'>=&gt;</span> {
+                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>kind</span>, <span class='ident'>Kind</span>::<span class='ident'>Pawn</span>);
+                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>piece</span>.<span class='ident'>color</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+            },
+            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;There should be a piece here.&quot;</span>),
+        }
+        <span class='ident'>game</span>.<span class='ident'>next_turn</span>();
+        <span class='kw'>break</span>;
+    }
+}</pre>
+</div><h4 id='method.in_check' class='method'><span id='in_check.v' class='invisible'><code>fn <a href='#method.in_check' class='fnname'>in_check</a>(&amp;self, color: <a class='enum' href='../chess/enum.Color.html' title='chess::Color'>Color</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></span></h4>
+<div class='docblock'><p>Sees whether the king of the given color is currently in check or not.</p>
+
+<h1 id='eksamples-14' class='section-header'><a href='#eksamples-14'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='comment'>// Clear the board, then put a black king at C5, and a white pawn at D4.</span>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new_empty</span>();
+<span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='number'>3</span>, <span class='number'>3</span>), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>WHITE</span>[<span class='number'>0</span>]));
+<span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='number'>2</span>, <span class='number'>4</span>), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>BLACK</span>[<span class='number'>5</span>]));
+
+<span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>in_check</span>(<span class='ident'>Color</span>::<span class='ident'>Black</span>));</pre>
+</div><h4 id='method.check_victory' class='method'><span id='check_victory.v' class='invisible'><code>fn <a href='#method.check_victory' class='fnname'>check_victory</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='enum' href='../chess/enum.Victory.html' title='chess::Victory'>Victory</a>, <a class='enum' href='../chess/enum.Color.html' title='chess::Color'>Color</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;</code></span></h4>
+<div class='docblock'><p>Checks whether the game is won, and returns the victory type and the color of the victor,
+or None if the game isn&#39;t won yet. In case of a draw a random color is returned.</p>
+
+<h1 id='eksamples-15' class='section-header'><a href='#eksamples-15'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='comment'>// Clear the board, then put a black king at A1, and a white queen at B2. We also need a</span>
+<span class='comment'>// white king on the board, if not the program panics.</span>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new_empty</span>();
+<span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='number'>1</span>, <span class='number'>1</span>), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>WHITE</span>[<span class='number'>4</span>]));
+<span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='number'>0</span>, <span class='number'>0</span>), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>BLACK</span>[<span class='number'>5</span>]));
+<span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='number'>6</span>, <span class='number'>7</span>), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>WHITE</span>[<span class='number'>5</span>]));
+
+<span class='comment'>// The king is in check, but it can still move and take out the queen.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>check_victory</span>(), <span class='prelude-val'>None</span>);
+
+<span class='comment'>// Move the queen to B3</span>
+<span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='number'>1</span>, <span class='number'>2</span>), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>WHITE</span>[<span class='number'>4</span>]));
+<span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='number'>1</span>, <span class='number'>1</span>), <span class='prelude-val'>None</span>);
+
+<span class='comment'>// Now the king isn&#39;t in check, but the king can&#39;t move so it&#39;s a stalemate draw.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>check_victory</span>(), <span class='prelude-val'>Some</span>((<span class='ident'>Victory</span>::<span class='ident'>Stalemate</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>)));
+
+<span class='comment'>// Add another queen at C3</span>
+<span class='ident'>game</span>.<span class='ident'>set_at_pos</span>((<span class='number'>2</span>, <span class='number'>2</span>), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>WHITE</span>[<span class='number'>4</span>]));
+
+<span class='comment'>// Now the king is in check, and can&#39;t move, so white has won by checkmate.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>check_victory</span>(), <span class='prelude-val'>Some</span>((<span class='ident'>Victory</span>::<span class='ident'>Checkmate</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>)));</pre>
+</div><h4 id='method.move_to_an' class='method'><span id='move_to_an.v' class='invisible'><code>fn <a href='#method.move_to_an' class='fnname'>move_to_an</a>(&amp;self,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; m: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; result: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; unicode: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></span></h4>
+<div class='docblock'><p>Turns a move, as returned from <code>valid_moves</code>, into <a href="https://en.wikipedia.org/wiki/Algebraic_notation_(chess)">algebraic
+notation</a> (AN).</p>
+
+<p>If <code>result</code> is <code>true</code> the function will detect whether a checkmate or a stalemate has
+occured, and add &quot;1-0&quot;, &quot;0-1&quot; or &quot;½-½&quot;.</p>
+
+<p>If <code>unicode</code> is <code>true</code> the pieces are represented by unicode symbols instead of letters.
+Only black pieces are used, as they are easier to see.</p>
+
+<h1 id='eksamples-16' class='section-header'><a href='#eksamples-16'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+
+<span class='comment'>// Turn a string from AN into a move, and back into AN.</span>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;Nc3&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>move_to_an</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>, <span class='bool-val'>true</span>, <span class='bool-val'>false</span>), <span class='string'>&quot;Nc3&quot;</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>move_to_an</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>, <span class='bool-val'>true</span>, <span class='bool-val'>true</span>), <span class='string'>&quot;♞c3&quot;</span>);
+
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;e5&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>Black</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>move_to_an</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>, <span class='bool-val'>true</span>, <span class='bool-val'>false</span>), <span class='string'>&quot;e5&quot;</span>);</pre>
+</div><h4 id='method.an_to_move' class='method'><span id='an_to_move.v' class='invisible'><code>fn <a href='#method.an_to_move' class='fnname'>an_to_move</a>(&amp;self,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; s: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; color: <a class='enum' href='../chess/enum.Color.html' title='chess::Color'>Color</a>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;&gt;</code></span></h4>
+<div class='docblock'><p>Turns a string in <a href="https://en.wikipedia.org/wiki/Algebraic_notation_(chess)">algebraic
+notation</a> (AN) into a move that can be passed to <code>move_pieces</code>.</p>
+
+<p>This function supports abbreviated algebraic notation, which means that certain characters
+can be removed, as long as it is unambiguous. For example, an &#39;x&#39; (which signals a capture)
+is completely ignored, and can even be added to moves that doesn&#39;t end with a capture. The
+same goes for &#39;=Q&#39; (which signals a pawn promotion) and &#39;e.p.&#39; (which signals <em>en passant</em>).</p>
+
+<p>The pieces can be represented by both letters and unicode symbols.</p>
+
+<p>To get the proper algebraic notation instead of the abbreviated one from a user, pass the
+result of <code>an_to_move</code> to <code>move_to_an</code>.</p>
+
+<p>This function returns <code>None</code> both if the input is malformed and if the move is invalid.
+There is currently no way to distinguish the two.</p>
+
+<h1 id='eksamples-17' class='section-header'><a href='#eksamples-17'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+<span class='comment'>// Start by moving a knight from B1 to C3.</span>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;Nc3&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='prelude-val'>Some</span>(<span class='macro'>vec</span><span class='macro'>!</span>[((<span class='number'>1</span>, <span class='number'>0</span>), (<span class='number'>2</span>, <span class='number'>2</span>))]));
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>.<span class='ident'>unwrap</span>());
+
+<span class='comment'>// Move a black pawn from D7 to D5.</span>
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;d5&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>Black</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='prelude-val'>Some</span>(<span class='macro'>vec</span><span class='macro'>!</span>[((<span class='number'>3</span>, <span class='number'>6</span>), (<span class='number'>3</span>, <span class='number'>4</span>))]));
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>.<span class='ident'>unwrap</span>());
+
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;e4&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='prelude-val'>Some</span>(<span class='macro'>vec</span><span class='macro'>!</span>[((<span class='number'>4</span>, <span class='number'>1</span>), (<span class='number'>4</span>, <span class='number'>3</span>))]));
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>.<span class='ident'>unwrap</span>());
+
+<span class='comment'>// Now the pawn at D5 can capture the pawn at E4.</span>
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;dxe4&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>Black</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='prelude-val'>Some</span>(<span class='macro'>vec</span><span class='macro'>!</span>[((<span class='number'>3</span>, <span class='number'>4</span>), (<span class='number'>4</span>, <span class='number'>3</span>))]));
+<span class='comment'>// Abbreviated notation is also valid.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;de4&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>Black</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;de&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>Black</span>));
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>.<span class='ident'>unwrap</span>());
+
+<span class='comment'>// Fast-forwards a little.</span>
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;Nf3&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>.<span class='ident'>unwrap</span>());
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;Ng5&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>.<span class='ident'>unwrap</span>());
+
+<span class='comment'>// Now both white knights can reach E4, so &quot;Ne4&quot; isn&#39;t enough.</span>
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;Ne4&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='prelude-val'>None</span>);
+
+<span class='comment'>// ...so we must specify the file the knight is moving from.</span>
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;Nce4&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='prelude-val'>Some</span>(<span class='macro'>vec</span><span class='macro'>!</span>[((<span class='number'>2</span>, <span class='number'>2</span>), (<span class='number'>4</span>, <span class='number'>3</span>))]));
+
+<span class='comment'>// We could also specify the rank, or both the rank and the file.</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;N3e4&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;Nc3e4&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>));
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>.<span class='ident'>unwrap</span>());
+
+<span class='comment'>// Fast forwards some more.</span>
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;Qf3&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>.<span class='ident'>unwrap</span>());
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;Be2&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>.<span class='ident'>unwrap</span>());
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;b3&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>.<span class='ident'>unwrap</span>());
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;Bb2&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='ident'>game</span>.<span class='ident'>move_pieces</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>.<span class='ident'>unwrap</span>());
+
+<span class='comment'>// Kingside castling.</span>
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;0-0&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='prelude-val'>Some</span>(<span class='macro'>vec</span><span class='macro'>!</span>[((<span class='number'>4</span>, <span class='number'>0</span>), (<span class='number'>5</span>, <span class='number'>0</span>)), ((<span class='number'>5</span>, <span class='number'>0</span>), (<span class='number'>6</span>, <span class='number'>0</span>)), ((<span class='number'>7</span>, <span class='number'>0</span>), (<span class='number'>5</span>, <span class='number'>0</span>))]));
+
+<span class='comment'>// Queenside castling.</span>
+<span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>an_to_move</span>(<span class='string'>&quot;0-0-0&quot;</span>, <span class='ident'>Color</span>::<span class='ident'>White</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>, <span class='prelude-val'>Some</span>(<span class='macro'>vec</span><span class='macro'>!</span>[((<span class='number'>4</span>, <span class='number'>0</span>), (<span class='number'>3</span>, <span class='number'>0</span>)), ((<span class='number'>3</span>, <span class='number'>0</span>), (<span class='number'>2</span>, <span class='number'>0</span>)), ((<span class='number'>0</span>, <span class='number'>0</span>), (<span class='number'>3</span>, <span class='number'>0</span>))]));</pre>
+</div><h4 id='method.move_to_string' class='method'><span id='move_to_string.v' class='invisible'><code>fn <a href='#method.move_to_string' class='fnname'>move_to_string</a>(&amp;self, m: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></span></h4>
+<div class='docblock'><p>Turns a move tuple into a human readable description.</p>
+
+<h1 id='eksamples-18' class='section-header'><a href='#eksamples-18'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+<span class='kw'>let</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>valid_moves</span>((<span class='number'>4</span>, <span class='number'>1</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>move_to_string</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>[<span class='number'>0</span>][<span class='number'>0</span>]), <span class='string'>&quot;Moving white pawn from E2 to E4&quot;</span>);</pre>
+</div><h4 id='method.moves_to_string' class='method'><span id='moves_to_string.v' class='invisible'><code>fn <a href='#method.moves_to_string' class='fnname'>moves_to_string</a>(&amp;self, m: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></span></h4>
+<div class='docblock'><p>Turns an array of move tuples, like entries returned from valid_moves, into a human readable description.</p>
+
+<h1 id='eksamples-19' class='section-header'><a href='#eksamples-19'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+<span class='kw'>let</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>valid_moves</span>((<span class='number'>4</span>, <span class='number'>1</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>game</span>.<span class='ident'>moves_to_string</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>[<span class='number'>0</span>]), <span class='string'>&quot;Moving white pawn from E2 to E4&quot;</span>);</pre>
+</div><h4 id='method.board_to_string' class='method'><span id='board_to_string.v' class='invisible'><code>fn <a href='#method.board_to_string' class='fnname'>board_to_string</a>(&amp;self, unicode: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></span></h4>
+<div class='docblock'><p>Returns the game board as a string.</p>
+
+<p>Set <code>unicode</code> to true if you want the pieces represented by their <a href="https://en.wikipedia.org/wiki/Chess_symbols_in_Unicode">unicode symbols</a> instead of letters.
+If <code>unicode</code> is false the same letters that are used in <a href="https://en.wikipedia.org/wiki/Algebraic_notation_(chess)">algebraic
+notation</a> is
+used, with the addition of &#39;P&#39; for pawns. The white pieces are represented by uppercase
+letters, while black are lowercase.</p>
+
+<h1 id='eksamples-20' class='section-header'><a href='#eksamples-20'>Eksamples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>game</span> <span class='op'>=</span> <span class='ident'>Game</span>::<span class='ident'>new</span>();
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>board</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>board_to_string</span>(<span class='bool-val'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>board</span>,
+           <span class='string'>&quot;rnbqkbnr\
+          \npppppppp\
+          \n        \
+          \n        \
+          \n        \
+          \n        \
+          \nPPPPPPPP\
+          \nRNBQKBNR&quot;</span>);
+
+<span class='ident'>board</span> <span class='op'>=</span> <span class='ident'>game</span>.<span class='ident'>board_to_string</span>(<span class='bool-val'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>board</span>,
+           <span class='string'>&quot;♜♞♝♛♚♝♞♜\
+          \n♟♟♟♟♟♟♟♟\
+          \n        \
+          \n        \
+          \n        \
+          \n        \
+          \n♙♙♙♙♙♙♙♙\
+          \n♖♘♗♕♔♗♘♖&quot;</span>);</pre>
+</div><h4 id='method.three_fold_repetition' class='method'><span id='three_fold_repetition.v' class='invisible'><code>fn <a href='#method.three_fold_repetition' class='fnname'>three_fold_repetition</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></span></h4>
+<div class='docblock'><p>Checks whether there has occured a three fold repetition.</p>
+</div><h4 id='method.fifty_move_rule' class='method'><span id='fifty_move_rule.v' class='invisible'><code>fn <a href='#method.fifty_move_rule' class='fnname'>fifty_move_rule</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></span></h4>
+<div class='docblock'><p>Checks whether a player can invoke the fifty-move-rule</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../chess/struct.Game.html' title='chess::Game'>Game</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/chess/lib.rs.html#151' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.clone' class='method'><span id='clone.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../chess/struct.Game.html' title='chess::Game'>Game</a>&lt;'a&gt;</code></span></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class='method'><span id='clone_from.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></span></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "chess";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
